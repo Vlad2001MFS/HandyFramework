@@ -19,7 +19,7 @@ std::string StringUtils::format(const char * fmt, ...) {
     HD_ASSERT(fmt);
     va_list args;
     va_start(args, fmt);
-    auto buf = std::string(_vscprintf(fmt, args) + 1, '\0');
+    auto buf = std::string(_vscprintf(fmt, args), '\0');
     vsprintf(buf.data(), fmt, args);
     va_end(args);
     return buf;
@@ -27,7 +27,7 @@ std::string StringUtils::format(const char * fmt, ...) {
 
 std::string StringUtils::formatArgs(const char * fmt, va_list args) {
     HD_ASSERT(fmt);
-    auto buf = std::string(_vscprintf(fmt, args) + 1, '\0');
+    auto buf = std::string(_vscprintf(fmt, args), '\0');
     vsprintf(buf.data(), fmt, args);
     return buf.data();
 }
