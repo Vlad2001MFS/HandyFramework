@@ -1,4 +1,5 @@
 #include "hdStream.hpp"
+#include "../Core/hdStringUtils.hpp"
 
 namespace hd {
 
@@ -23,18 +24,15 @@ std::string StreamReader::readLine(char separator) {
 }
 
 std::vector<std::string> StreamReader::readAllLines() {
-    std::vector<std::string> data;
-    while (!isEOF()) {
-        data.push_back(readLine());
-    }
-    return data;
+    return StringUtils::split(readAllText(), "\n", false);
 }
 
 std::string StreamReader::readAllText() {
-    std::string data;
     auto size = getSize();
-    data.resize(size);
-    HD_ASSERT(read(data.data(), sizeof(char)*size) == sizeof(char)*size);
+    auto data = std::string(size, '\0');
+    if (read(data.data(), size) != size) {
+        HD_LOG_ERROR("Failed to read all text from stream '%s'", getName().data());
+    }
     return data;
 }
 
