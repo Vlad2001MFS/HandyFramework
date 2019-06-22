@@ -19,13 +19,14 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\3rd\glad\glad.c" />
     <ClCompile Include="src\hd\Core\hdClock.cpp" />
     <ClCompile Include="src\hd\Core\hdColor.cpp" />
     <ClCompile Include="src\hd\Core\hdCommon.cpp" />
     <ClCompile Include="src\hd\Core\hdFPSCounter.cpp" />
     <ClCompile Include="src\hd\Core\hdStringStream.cpp" />
     <ClCompile Include="src\hd\Core\hdStringUtils.cpp" />
-    <ClCompile Include="src\hd\Graphics\hdRenderDeviceD3D11.cpp" />
+    <ClCompile Include="src\hd\Graphics\hdRenderDeviceGL.cpp" />
     <ClCompile Include="src\hd\IO\hdConfig.cpp" />
     <ClCompile Include="src\hd\IO\hdDeserializer.cpp" />
     <ClCompile Include="src\hd\IO\hdFileStream.cpp" />
@@ -36,9 +37,16 @@
     <ClCompile Include="src\hd\IO\hdStream.cpp" />
     <ClCompile Include="src\hd\Math\hdMathUtils.cpp" />
     <ClCompile Include="src\hd\System\hdBaseApp.cpp" />
-    <ClCompile Include="src\hd\System\hdWindow.cpp" />
+    <ClCompile Include="src\hd\System\hdWindowWin32.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\3rd\glad\glad.h" />
+    <ClInclude Include="src\3rd\glad\khrplatform.h" />
+    <ClInclude Include="src\3rd\gl\glcorearb.h" />
+    <ClInclude Include="src\3rd\gl\glext.h" />
+    <ClInclude Include="src\3rd\gl\glxext.h" />
+    <ClInclude Include="src\3rd\gl\wgl.h" />
+    <ClInclude Include="src\3rd\gl\wglext.h" />
     <ClInclude Include="src\3rd\stb\stb_image.h" />
     <ClInclude Include="src\hd\Core\hdClock.hpp" />
     <ClInclude Include="src\hd\Core\hdColor.hpp" />

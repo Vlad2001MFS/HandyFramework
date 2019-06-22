@@ -6,12 +6,12 @@ namespace hd {
 
 class RenderDevice {
 public:
-    RenderDevice();
-    RenderDevice();
-    ~RenderDevice();
+    //RenderDevice();
+    //RenderDevice();
+    //~RenderDevice();
 
-    void create();
-    void destroy();
+    //void create();
+    //void destroy();
 
 
 

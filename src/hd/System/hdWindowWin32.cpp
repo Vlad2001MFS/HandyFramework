@@ -1,6 +1,11 @@
 #include "hdWindow.hpp"
 #include "../Core/hdStringUtils.hpp"
 #include <Windows.h>
+#ifdef HD_GAPI_OPENGL
+#   include "../..//3rd/glad/glad.h"
+#   include "../..//3rd/gl/wglext.h"
+#   pragma comment(lib, "opengl32.lib")
+#endif
 
 namespace hd {
 
@@ -25,6 +30,10 @@ struct Window::Impl {
     }
 
     HWND hwnd;
+#ifdef HD_GAPI_OPENGL
+    HDC hdc;
+    HGLRC hrc;
+#endif
     std::string wndClassName;
     std::wstring wndClassNameWide;
     std::vector<WindowEvent> events;
@@ -34,13 +43,44 @@ struct Window::Impl {
 LPARAM CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
 KeyCode getKeyCodeFromWinKey(uint32_t key);
 
-Window::Window() : impl(std::make_unique<Impl>()) {
+#ifdef HD_GAPI_OPENGL
+OpenGLContextSettings::OpenGLContextSettings() {
+    this->majorVersion = 4;
+    this->minorVersion = 5;
+    this->depthBits = 24;
+    this->stencilBits = 0;
+    this->msaaSamples = 1;
+    this->isCoreProfile = true;
+#ifdef HD_BUILDMODE_DEBUG
+    this->isDebug = true;
+#else
+    this->isDebug = false;
+#endif
+}
 
+OpenGLContextSettings::OpenGLContextSettings(uint32_t majorVersion, uint32_t minorVersion, uint32_t depthBits, uint32_t stencilBits, uint32_t msaaSamples, bool isCoreProfile, bool isDebug) {
+    this->majorVersion = majorVersion;
+    this->minorVersion = minorVersion;
+    this->depthBits = depthBits;
+    this->stencilBits = stencilBits;
+    this->msaaSamples = msaaSamples;
+    this->isCoreProfile = isCoreProfile;
+    this->isDebug = isDebug;
+}
+#endif
+
+Window::Window() : impl(std::make_unique<Impl>()) {
 }
 
 Window::Window(const std::string &title, uint32_t w, uint32_t h) : Window() {
     create(title, w, h);
 }
+
+#ifdef HD_GAPI_OPENGL
+Window::Window(const std::string &title, uint32_t w, uint32_t h, const OpenGLContextSettings &settings) : Window() {
+    create(title, w, h, settings);
+}
+#endif
 
 Window::~Window() {
     destroy();
@@ -93,7 +133,91 @@ void Window::create(const std::string &title, uint32_t w, uint32_t h) {
     UpdateWindow(impl->hwnd);
 }
 
+#ifdef HD_GAPI_OPENGL
+void Window::create(const std::string &title, uint32_t w, uint32_t h, const OpenGLContextSettings &settings) {
+    create(title, w, h);
+
+    PIXELFORMATDESCRIPTOR pfd;
+    pfd.nSize = sizeof(pfd);
+    pfd.nVersion = 1;
+    pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+    pfd.iPixelType = PFD_TYPE_RGBA;
+    pfd.cColorBits = 32;
+    pfd.cRedBits = 0;
+    pfd.cRedShift = 0;
+    pfd.cGreenBits = 0;
+    pfd.cGreenShift = 0;
+    pfd.cBlueBits = 0;
+    pfd.cBlueShift = 0;
+    pfd.cAlphaBits = 0;
+    pfd.cAlphaShift = 0;
+    pfd.cAccumBits = 0;
+    pfd.cAccumRedBits = 0;
+    pfd.cAccumGreenBits = 0;
+    pfd.cAccumBlueBits = 0;
+    pfd.cAccumAlphaBits = 0;
+    pfd.cDepthBits = settings.depthBits;
+    pfd.cStencilBits = settings.stencilBits;
+    pfd.cAuxBuffers = 0;
+    pfd.iLayerType = 0;
+    pfd.bReserved = 0;
+    pfd.dwLayerMask = 0;
+    pfd.dwVisibleMask = 0;
+    pfd.dwDamageMask = 0;
+
+    impl->hdc = GetDC(impl->hwnd);
+    auto format = ChoosePixelFormat(impl->hdc, &pfd);
+    if (!format) {
+        HD_LOG_ERROR("Failed to initialize pixel format");
+    }
+    if (!SetPixelFormat(impl->hdc, format, &pfd)) {
+        HD_LOG_ERROR("Failed to set pixel format %d for window", format);
+    }
+
+    HGLRC tempCtx = wglCreateContext(impl->hdc);
+    if (!tempCtx) {
+        HD_LOG_ERROR("Failed to create temp OpenGL context");
+    }
+    if (!wglMakeCurrent(impl->hdc, tempCtx)) {
+        HD_LOG_ERROR("Failed to make current temp OpenGL context");
+    }
+
+    auto wglCreateContextAttribs = reinterpret_cast<PFNWGLCREATECONTEXTATTRIBSARBPROC>(wglGetProcAddress("wglCreateContextAttribsARB"));
+
+    wglMakeCurrent(nullptr, nullptr);
+    wglDeleteContext(tempCtx);
+
+    if (!wglCreateContextAttribs) {
+        HD_LOG_ERROR("Failed to get wglCreateContextAttribs function");
+    }
+
+    auto ctxFlags = WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB;
+    if (settings.isDebug) {
+        ctxFlags |= WGL_CONTEXT_DEBUG_BIT_ARB;
+    }
+    const int attribs[] = {
+        WGL_CONTEXT_MAJOR_VERSION_ARB, settings.majorVersion,
+        WGL_CONTEXT_MINOR_VERSION_ARB, settings.minorVersion,
+        WGL_CONTEXT_FLAGS_ARB,         WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
+        WGL_CONTEXT_PROFILE_MASK_ARB,  settings.isCoreProfile ? WGL_CONTEXT_CORE_PROFILE_BIT_ARB : WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB,
+        0
+    };
+    impl->hrc = wglCreateContextAttribs(impl->hdc, nullptr, attribs);
+    if (!impl->hrc) {
+        HD_LOG_ERROR("Failed to create OpenGL context");
+    }
+    if (!wglMakeCurrent(impl->hdc, impl->hrc)) {
+        HD_LOG_ERROR("Failed to make current OpenGL context");
+    }
+}
+#endif
+
 void Window::destroy() {
+#ifdef HD_GAPI_OPENGL
+    wglMakeCurrent(nullptr, nullptr);
+    wglDeleteContext(impl->hrc);
+    DeleteDC(impl->hdc);
+#endif
     DestroyWindow(impl->hwnd);
     UnregisterClass(impl->wndClassNameWide.data(), GetModuleHandle(nullptr));
 }

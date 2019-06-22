@@ -25,6 +25,12 @@
     <Filter Include="3rd\stb">
       <UniqueIdentifier>{93c1373e-c858-42d6-bf4c-4fe2b9320664}</UniqueIdentifier>
     </Filter>
+    <Filter Include="3rd\glad">
+      <UniqueIdentifier>{18e96a5f-f478-404a-be41-dc077a5dae3f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="3rd\gl">
+      <UniqueIdentifier>{cfad5226-02ea-43d6-ae98-2b0684b804b8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\hd\Core\hdClock.cpp">
@@ -75,11 +81,14 @@
     <ClCompile Include="src\hd\System\hdBaseApp.cpp">
       <Filter>hd\System</Filter>
     </ClCompile>
-    <ClCompile Include="src\hd\System\hdWindow.cpp">
-      <Filter>hd\System</Filter>
-    </ClCompile>
-    <ClCompile Include="src\hd\Graphics\hdRenderDeviceD3D11.cpp">
+    <ClCompile Include="src\hd\Graphics\hdRenderDeviceGL.cpp">
       <Filter>hd\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\3rd\glad\glad.c">
+      <Filter>3rd\glad</Filter>
+    </ClCompile>
+    <ClCompile Include="src\hd\System\hdWindowWin32.cpp">
+      <Filter>hd\System</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -151,6 +160,27 @@
     </ClInclude>
     <ClInclude Include="src\3rd\stb\stb_image.h">
       <Filter>3rd\stb</Filter>
+    </ClInclude>
+    <ClInclude Include="src\3rd\glad\glad.h">
+      <Filter>3rd\glad</Filter>
+    </ClInclude>
+    <ClInclude Include="src\3rd\glad\khrplatform.h">
+      <Filter>3rd\glad</Filter>
+    </ClInclude>
+    <ClInclude Include="src\3rd\gl\glcorearb.h">
+      <Filter>3rd\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="src\3rd\gl\glext.h">
+      <Filter>3rd\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="src\3rd\gl\glxext.h">
+      <Filter>3rd\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="src\3rd\gl\wgl.h">
+      <Filter>3rd\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="src\3rd\gl\wglext.h">
+      <Filter>3rd\gl</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
