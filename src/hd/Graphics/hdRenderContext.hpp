@@ -4,6 +4,7 @@
 #include "../IO/hdStream.hpp"
 #include "../System/hdWindow.hpp"
 #include "../../3rd/include/glm/glm.hpp"
+#include "../../3rd/include/glm/ext.hpp"
 #include <memory>
 
 namespace hd {
@@ -313,18 +314,18 @@ public:
     void destroyProgram(HProgram &handle);
     HProgramConstant getProgramConstantID(const HProgram &handle, const std::string &name);
     void bindProgram(const HProgram &handle);
-    void setProgramConstant(HProgramConstant &id, int value);
-    void setProgramConstant(HProgramConstant &id, float value);
-    void setProgramConstant(HProgramConstant &id, const glm::vec2 &value);
-    void setProgramConstant(HProgramConstant &id, const glm::vec3 &value);
-    void setProgramConstant(HProgramConstant &id, const glm::vec4 &value);
-    void setProgramConstant(HProgramConstant &id, const glm::mat4 &value);
-    void setProgramConstant(HProgramConstant &id, const int *value, uint32_t count);
-    void setProgramConstant(HProgramConstant &id, const float *value, uint32_t count);
-    void setProgramConstant(HProgramConstant &id, const glm::vec2 *value, uint32_t count);
-    void setProgramConstant(HProgramConstant &id, const glm::vec3 *value, uint32_t count);
-    void setProgramConstant(HProgramConstant &id, const glm::vec4 *value, uint32_t count);
-    void setProgramConstant(HProgramConstant &id, const glm::mat4 *value, uint32_t count);
+    void setProgramConstant(const HProgramConstant &id, int value);
+    void setProgramConstant(const HProgramConstant &id, float value);
+    void setProgramConstant(const HProgramConstant &id, const glm::vec2 &value);
+    void setProgramConstant(const HProgramConstant &id, const glm::vec3 &value);
+    void setProgramConstant(const HProgramConstant &id, const glm::vec4 &value);
+    void setProgramConstant(const HProgramConstant &id, const glm::mat4 &value);
+    void setProgramConstant(const HProgramConstant &id, const int *value, uint32_t count);
+    void setProgramConstant(const HProgramConstant &id, const float *value, uint32_t count);
+    void setProgramConstant(const HProgramConstant &id, const glm::vec2 *value, uint32_t count);
+    void setProgramConstant(const HProgramConstant &id, const glm::vec3 *value, uint32_t count);
+    void setProgramConstant(const HProgramConstant &id, const glm::vec4 *value, uint32_t count);
+    void setProgramConstant(const HProgramConstant &id, const glm::mat4 *value, uint32_t count);
 
 private:
     struct Impl;

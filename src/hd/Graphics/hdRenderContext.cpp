@@ -1271,9 +1271,12 @@ HProgram RenderContext::createProgram(const std::string &name, const std::string
         }
     }
 
+    auto vsSource = versionStr + definesStr + "#line 1\n" + vsCode;
+    auto psSource = versionStr + definesStr + "#line 1\n" + psCode;
+
     auto vs = glCreateShader(GL_VERTEX_SHADER);
-    const char *vsSources[] = { versionStr.data(), definesStr.data(), "#line 1\n", vsCode.data() };
-    int vsSourcesLengths[] = {  static_cast<int>(versionStr.length()), static_cast<int>(definesStr.length()), static_cast<int>(strlen("#line 1\n")), static_cast<int>(vsCode.length()) };
+    const char *vsSources[] = { vsSource.data() };
+    int vsSourcesLengths[] = { static_cast<int>(vsSource.length()) };
     glShaderSource(vs, HD_ARRAYSIZE(vsSourcesLengths), vsSources, vsSourcesLengths);
     glCompileShader(vs);
     glGetShaderiv(vs, GL_COMPILE_STATUS, &result);
@@ -1284,9 +1287,9 @@ HProgram RenderContext::createProgram(const std::string &name, const std::string
         HD_LOG_ERROR("Failed to compile vertex shader for program '%s'. Errors:\n%s", name.data(), errorStr.data());
     }
 
-    uint32_t ps = glCreateShader(GL_FRAGMENT_SHADER);
-    const char *psSources[] = { versionStr.data(), definesStr.data(), "#line 1\n", psCode.data() };
-    int psSourcesLengths[] = {  static_cast<int>(versionStr.length()), static_cast<int>(definesStr.length()), static_cast<int>(strlen("#line 1\n")), static_cast<int>(psCode.length()) };
+    auto ps = glCreateShader(GL_FRAGMENT_SHADER);
+    const char *psSources[] = { psSource.data() };
+    int psSourcesLengths[] = { static_cast<int>(psSource.length()) };
     glShaderSource(ps, HD_ARRAYSIZE(psSourcesLengths), psSources, psSourcesLengths);
     glCompileShader(ps);
     glGetShaderiv(ps, GL_COMPILE_STATUS, &result);
@@ -1370,73 +1373,73 @@ void RenderContext::bindProgram(const HProgram &handle) {
     impl->bindProgram(handle->id);
 }
 
-void RenderContext::setProgramConstant(HProgramConstant &id, int value) {
+void RenderContext::setProgramConstant(const HProgramConstant &id, int value) {
     HD_ASSERT(id);
     HD_ASSERT(impl->currentProgram != 0);
     glUniform1i(id.value, value);
 }
 
-void RenderContext::setProgramConstant(HProgramConstant &id, float value) {
+void RenderContext::setProgramConstant(const HProgramConstant &id, float value) {
     HD_ASSERT(id);
     HD_ASSERT(impl->currentProgram != 0);
     glUniform1f(id.value, value);
 }
 
-void RenderContext::setProgramConstant(HProgramConstant &id, const glm::vec2 &value) {
+void RenderContext::setProgramConstant(const HProgramConstant &id, const glm::vec2 &value) {
     HD_ASSERT(id);
     HD_ASSERT(impl->currentProgram != 0);
     glUniform2f(id.value, value.x, value.y);
 }
 
-void RenderContext::setProgramConstant(HProgramConstant &id, const glm::vec3 &value) {
+void RenderContext::setProgramConstant(const HProgramConstant &id, const glm::vec3 &value) {
     HD_ASSERT(id);
     HD_ASSERT(impl->currentProgram != 0);
     glUniform3f(id.value, value.x, value.y, value.z);
 }
 
-void RenderContext::setProgramConstant(HProgramConstant &id, const glm::vec4 &value) {
+void RenderContext::setProgramConstant(const HProgramConstant &id, const glm::vec4 &value) {
     HD_ASSERT(id);
     HD_ASSERT(impl->currentProgram != 0);
     glUniform4f(id.value, value.x, value.y, value.z, value.w);
 }
 
-void RenderContext::setProgramConstant(HProgramConstant &id, const glm::mat4 &value) {
+void RenderContext::setProgramConstant(const HProgramConstant &id, const glm::mat4 &value) {
     HD_ASSERT(id);
     HD_ASSERT(impl->currentProgram != 0);
     glUniformMatrix4fv(id.value, 1, false, reinterpret_cast<const float*>(&value));
 }
 
-void RenderContext::setProgramConstant(HProgramConstant &id, const int *value, uint32_t count) {
+void RenderContext::setProgramConstant(const HProgramConstant &id, const int *value, uint32_t count) {
     HD_ASSERT(id);
     HD_ASSERT(impl->currentProgram != 0);
     glUniform1iv(id.value, count, value);
 }
 
-void RenderContext::setProgramConstant(HProgramConstant &id, const float *value, uint32_t count) {
+void RenderContext::setProgramConstant(const HProgramConstant &id, const float *value, uint32_t count) {
     HD_ASSERT(id);
     HD_ASSERT(impl->currentProgram != 0);
     glUniform1fv(id.value, count, value);
 }
 
-void RenderContext::setProgramConstant(HProgramConstant &id, const glm::vec2 *value, uint32_t count) {
+void RenderContext::setProgramConstant(const HProgramConstant &id, const glm::vec2 *value, uint32_t count) {
     HD_ASSERT(id);
     HD_ASSERT(impl->currentProgram != 0);
     glUniform2fv(id.value, count, reinterpret_cast<const float*>(value));
 }
 
-void RenderContext::setProgramConstant(HProgramConstant &id, const glm::vec3 *value, uint32_t count) {
+void RenderContext::setProgramConstant(const HProgramConstant &id, const glm::vec3 *value, uint32_t count) {
     HD_ASSERT(id);
     HD_ASSERT(impl->currentProgram != 0);
     glUniform3fv(id.value, count, reinterpret_cast<const float*>(value));
 }
 
-void RenderContext::setProgramConstant(HProgramConstant &id, const glm::vec4 *value, uint32_t count) {
+void RenderContext::setProgramConstant(const HProgramConstant &id, const glm::vec4 *value, uint32_t count) {
     HD_ASSERT(id);
     HD_ASSERT(impl->currentProgram != 0);
     glUniform4fv(id.value, count, reinterpret_cast<const float*>(value));
 }
 
-void RenderContext::setProgramConstant(HProgramConstant &id, const glm::mat4 *value, uint32_t count) {
+void RenderContext::setProgramConstant(const HProgramConstant &id, const glm::mat4 *value, uint32_t count) {
     HD_ASSERT(id);
     HD_ASSERT(impl->currentProgram != 0);
     glUniformMatrix4fv(id.value, count, false, reinterpret_cast<const float*>(value));
