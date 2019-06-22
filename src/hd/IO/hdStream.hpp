@@ -1,6 +1,7 @@
 #pragma once
 #include "../Core/hdCommon.hpp"
 #include <string>
+#include <vector>
 
 namespace hd {
 
@@ -33,6 +34,10 @@ public:
     virtual ~StreamReader();
 
     virtual size_t read(void *data, size_t size) = 0;
+
+    std::string readLine(char separator = '\n');
+    std::vector<std::string> readAllLines();
+    std::string readAllText();
 
     template<typename T>
     size_t read(T &value) {

@@ -1,6 +1,7 @@
 #include "hdImage.hpp"
 #include "hdFileStream.hpp"
-#include "../../3rd/stb/stb_image.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "../../3rd/include/stb/stb_image.h"
 #include <memory>
 #include <vector>
 

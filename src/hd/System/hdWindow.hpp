@@ -1,12 +1,11 @@
 #pragma once
+#include "../Core/hdColor.hpp"
 #include "hdWindowEvent.hpp"
-#include "../Core/hdCommon.hpp"
 #include <memory>
 #include <string>
 
 namespace hd {
 
-#ifdef HD_GAPI_OPENGL
 struct OpenGLContextSettings {
     OpenGLContextSettings();
     OpenGLContextSettings(uint32_t majorVersion, uint32_t minorVersion, uint32_t depthBits, uint32_t stencilBits, uint32_t msaaSamples, bool isCoreProfile, bool isDebug);
@@ -17,29 +16,43 @@ struct OpenGLContextSettings {
     bool isCoreProfile;
     bool isDebug;
 };
-#endif
+
+enum class WindowFlags {
+    None = 0,
+    Fullscreen = 1,
+    Hidden = 2,
+    Borderless = 4,
+    Resizable = 8,
+    Minimized = 16,
+    Maximized = 32,
+    InputGrabbed = 64,
+    AllowHighDPI = 128
+};
+HD_DECL_ENUM_OPS(WindowFlags)
 
 class Window {
     HD_NONCOPYABLE_CLASS(Window)
+
 public:
     Window();
-    Window(const std::string &title, uint32_t w, uint32_t h);
-#ifdef HD_GAPI_OPENGL
-    Window(const std::string &title, uint32_t w, uint32_t h, const OpenGLContextSettings &settings);
-#endif
+    Window(const std::string &title, uint32_t w, uint32_t h, WindowFlags flags);
+    Window(const std::string &title, uint32_t w, uint32_t h, WindowFlags flags, const OpenGLContextSettings &contextSettings);
     ~Window();
 
-    void create(const std::string &title, uint32_t w, uint32_t h);
-#ifdef HD_GAPI_OPENGL
-    void create(const std::string &title, uint32_t w, uint32_t h, const OpenGLContextSettings &settings);
-#endif
+    void create(const std::string &title, uint32_t w, uint32_t h, WindowFlags flags);
+    void create(const std::string &title, uint32_t w, uint32_t h, WindowFlags flags, const OpenGLContextSettings &contextSettings);
     void destroy();
+    void activate();
     bool processEvent(WindowEvent &e);
+    void swapBuffers();
     void close();
 
-    void setCursorPos(int x, int y);
-    int getCursorPosX() const;
-    int getCursorPosY() const;
+    void setHighPriorityProcess();
+    void setVSyncState(bool vsync);
+    bool getVSyncState() const;
+    void setCursorPosition(int x, int y);
+    int getCursorPositionX() const;
+    int getCursorPositionY() const;
     void setCursorVisible(bool visible);
     bool isCursorVisible() const;
     bool isKeyDown(KeyCode code) const;
@@ -48,19 +61,23 @@ public:
     bool isFocused() const;
     void setTitle(const std::string &title);
     std::string getTitle() const;
-    void setPos(int x, int y);
-    int getPosX() const;
-    int getPosY() const;
+    void setPosition(int x, int y);
+    int getPositionX() const;
+    int getPositionY() const;
     void setSize(uint32_t w, uint32_t h);
     int getSizeX() const;
     int getSizeY() const;
     int getCenterX() const;
     int getCenterY() const;
+    WindowFlags getFlags() const;
+    bool hasOpenGLContext() const;
+    const OpenGLContextSettings &getOpenGLContextSettings() const;
+    Color4 *getSurface() const;
     void *getOSWindowHandle() const;
-
-    struct Impl;
+    void *getOSContextHandle() const;
 
 private:
+    struct Impl;
     std::unique_ptr<Impl> impl;
 };
 

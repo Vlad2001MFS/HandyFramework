@@ -5,20 +5,13 @@ namespace hd {
 BaseApp::BaseApp() {}
 BaseApp::~BaseApp() {}
 
-void BaseApp::onInitialize() {}
-void BaseApp::onShutdown() {}
-void BaseApp::onEvent(const WindowEvent &event) {}
-void BaseApp::onFixedUpdate() {}
-void BaseApp::onUpdate() {}
-void BaseApp::onDraw() {}
-
 void BaseApp::run() {
-    const float UPDATES_COUNT_PER_SEC = 30.0f;
-    const Time UPDATE_TIME = Time::fromMilliseconds(1000.0f / UPDATES_COUNT_PER_SEC);
+    const auto UPDATES_COUNT_PER_SEC = 30.0f;
+    const auto UPDATE_TIME = Time::fromMilliseconds(1000.0f / UPDATES_COUNT_PER_SEC);
 
     onInitialize();
     Time updateTimer;
-    bool isExit = false;
+    auto isExit = false;
     while (!isExit) {
         WindowEvent event;
         while (mWindow.processEvent(event)) {
