@@ -64,6 +64,7 @@ struct Window::Impl {
     WindowFlags flags = WindowFlags::None;
     OpenGLContextSettings contextSettings;
     bool isFocused = true;
+    bool isExit = false;
 
     void createWindow(const std::string &title, uint32_t w, uint32_t h, WindowFlags flags, bool forOpenGL) {
         auto sdlFlags = SDL_WINDOW_SHOWN | getSDLWindowFlagsFromWindowFlags(flags);
@@ -286,11 +287,7 @@ void Window::swapBuffers() {
 }
 
 void Window::close() {
-    if (isOpened()) {
-        SDL_Event event;
-        event.type = SDL_QUIT;
-        SDL_PushEvent(&event);
-    }
+    impl->isExit = true;
 }
 
 void Window::setHighPriorityProcess() {
