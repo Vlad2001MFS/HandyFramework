@@ -229,6 +229,7 @@ using HVertexBuffer = Handle<struct VertexBufferImpl*, struct TAG_VertexBufferIm
 using HIndexBuffer = Handle<struct IndexBufferImpl*, struct TAG_IndexBufferImpl>;
 using HConstantBuffer = Handle<struct ConstantBufferImpl*, struct TAG_ConstantBufferImpl>;
 using HTexture2D = Handle<struct Texture2DImpl*, struct TAG_Texture2DImpl>;
+using HTexture2DArray = Handle<struct Texture2DArrayImpl*, struct TAG_Texture2DArrayImpl>;
 using HSamplerState = Handle<struct SamplerStateImpl*, struct TAG_SamplerStateImpl>;
 using HProgram = Handle<struct ProgramImpl*, struct TAG_ProgramImpl>;
 using HProgramConstant = Handle<int, struct TAG_ProgramConstant, -1>;
@@ -296,6 +297,14 @@ public:
     HTexture2D createTexture2DFromFile(const std::string &filename);
     void destroyTexture2D(HTexture2D &handle);
     void bindTexture2D(const HTexture2D &handle, uint32_t slot);
+    
+    HTexture2DArray createTexture2DArray(const void *data, uint32_t w, uint32_t h, TextureFormat format, uint32_t layers);
+    HTexture2DArray createTexture2DArray(const void *data, const glm::ivec2 &size, TextureFormat format, uint32_t layers);
+    void setTexture2DArrayLayerData(const HTexture2DArray &handle, uint32_t layer, const void *data, TextureFormat format);
+    void setTexture2DArrayLayerData(const HTexture2DArray &handle, uint32_t layer, StreamReader &stream);
+    void setTexture2DArrayLayerData(const HTexture2DArray &handle, uint32_t layer, const std::string &filename);
+    void destroyTexture2DArray(HTexture2DArray &handle);
+    void bindTexture2DArray(const HTexture2DArray &handle, uint32_t slot);
 
     HSamplerState createSamplerState(SamplerFilter filter, uint32_t maxAnisotropy = 1);
     HSamplerState createSamplerState(SamplerFilter filter, uint32_t maxAnisotropy, CompareFunc compareFunc, bool compareRefToTex);

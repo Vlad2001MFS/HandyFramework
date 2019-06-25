@@ -453,6 +453,13 @@ struct Texture2DImpl {
     glm::ivec2 size;
 };
 
+struct Texture2DArrayImpl {
+    uint32_t id;
+    TextureFormat format;
+    glm::ivec2 size;
+    uint32_t layers;
+};
+
 struct SamplerStateImpl {
     uint32_t id;
     SamplerFilter filter;
@@ -475,6 +482,7 @@ struct RenderContext::Impl {
     std::vector<HIndexBuffer> indexBuffers;
     std::vector<HConstantBuffer> constantBuffers;
     std::vector<HTexture2D> textures2D;
+    std::vector<HTexture2DArray> texture2DArrays;
     std::vector<HSamplerState> samplerStates;
     std::vector<HProgram> programs;
 };
@@ -533,6 +541,9 @@ void RenderContext::destroy() {
     }
     for (auto &it : impl->textures2D) {
         destroyTexture2D(it);
+    }
+    for (auto &it : impl->texture2DArrays) {
+        destroyTexture2DArray(it);
     }
     for (auto &it : impl->samplerStates) {
         destroySamplerState(it);
@@ -914,6 +925,55 @@ void RenderContext::bindTexture2D(const HTexture2D &handle, uint32_t slot) {
     HD_ASSERT(slot < MAX_TEXTURES);
     glActiveTexture(GL_TEXTURE0 + slot);
     glBindTexture(GL_TEXTURE_2D, handle->id);
+}
+
+HTexture2DArray RenderContext::createTexture2DArray(const void *data, uint32_t w, uint32_t h, TextureFormat format, uint32_t layers) {
+    HD_ASSERT(w != 0 && h != 0);
+    auto obj = new Texture2DArrayImpl();
+    impl->texture2DArrays.push_back(HTexture2DArray(obj));
+    obj->format = format;
+    obj->size = glm::ivec2(w, h);
+    glGenTextures(1, &obj->id);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, obj->id);
+    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, gTextureInternalFormats[static_cast<size_t>(format)], w, h, layers, 0, gTextureExternalFormats[static_cast<size_t>(format)], gTextureDataTypes[static_cast<size_t>(format)], data);
+    return impl->texture2DArrays.back();
+}
+
+HTexture2DArray RenderContext::createTexture2DArray(const void *data, const glm::ivec2 &size, TextureFormat format, uint32_t layers) {
+    return createTexture2DArray(data, size.x, size.y, format, layers);
+}
+
+void RenderContext::setTexture2DArrayLayerData(const HTexture2DArray &handle, uint32_t layer, const void *data, TextureFormat format) {
+   HD_ASSERT(handle);
+   glBindTexture(GL_TEXTURE_2D_ARRAY, handle->id);
+   glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, layer, handle->size.x, handle->size.y, 1, gTextureExternalFormats[static_cast<size_t>(format)], gTextureDataTypes[static_cast<size_t>(format)], data);
+   glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
+}
+
+void RenderContext::setTexture2DArrayLayerData(const HTexture2DArray &handle, uint32_t layer, StreamReader &stream) {
+    auto img = Image(stream);
+    setTexture2DArrayLayerData(handle, layer, img.getPixels(), TextureFormat::RGBA8);
+}
+
+void RenderContext::setTexture2DArrayLayerData(const HTexture2DArray &handle, uint32_t layer, const std::string &filename) {
+    auto fs = FileReader(filename);
+    fs.setName(filename);
+    setTexture2DArrayLayerData(handle, layer, fs);
+}
+
+void RenderContext::destroyTexture2DArray(HTexture2DArray &handle) {
+    if (handle) {
+        glDeleteTextures(1, &handle->id);
+        HD_DELETE(handle.value);
+        handle.invalidate();
+    }
+}
+
+void RenderContext::bindTexture2DArray(const HTexture2DArray &handle, uint32_t slot) {
+    HD_ASSERT(handle);
+    HD_ASSERT(slot < MAX_TEXTURES);
+    glActiveTexture(GL_TEXTURE0 + slot);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, handle->id);
 }
 
 HSamplerState RenderContext::createSamplerState(SamplerFilter filter, uint32_t maxAnisotropy) {
