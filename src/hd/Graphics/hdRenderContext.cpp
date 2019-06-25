@@ -477,271 +477,6 @@ struct RenderContext::Impl {
     std::vector<HTexture2D> textures2D;
     std::vector<HSamplerState> samplerStates;
     std::vector<HProgram> programs;
-    uint32_t currentVertexFormat = 0;
-    struct {
-        uint32_t id = 0;
-        uint32_t offset = 0, stride = 0;
-    } currentVertexBuffer[MAX_VERTEX_BUFFERS];
-    uint32_t currentIndexBuffer = 0;
-    uint32_t currentConstantBuffer[MAX_CONSTANT_BUFFERS] = { 0 };
-    uint32_t currentTexture2D[MAX_TEXTURES] = { 0 };
-    uint32_t currentSamplerState[MAX_SAMPLER_STATES] = { 0 };
-    uint32_t currentProgram = 0;
-    uint32_t currentVBO = 0, currentUBO = 0;
-    struct {
-        bool isEnabled = false;
-        CompareFunc compFunc = CompareFunc::Less;
-        bool mask = true;
-    } currentDepthState;
-    struct {
-        bool isEnabled = false;
-        StencilTestDesc desc;
-        int ref = 0;
-    } currentStencilState;
-    struct {
-        BlendModeDesc desc;
-        ColorMask colorMask;
-    } currentBlendState;
-    struct {
-        CullFace cullFace = CullFace::None;
-        FillMode fillMode = FillMode::Solid;
-        FrontFace frontFace = FrontFace::CCW;
-        PolygonOffset polygonOffset;
-    } currentRasterizerState;
-    struct {
-        int x = 0, y = 0;
-        int w = 0, h = 0;
-    } currentViewport;
-
-    void bindVertexFormat(uint32_t id) {
-        if (currentVertexFormat != id) {
-            currentVertexFormat = id;
-            glBindVertexArray(id);
-        }
-    }
-
-    void bindVertexBuffer(uint32_t id, uint32_t slot, uint32_t offset, uint32_t stride) {
-        if (currentVertexBuffer[slot].id != id || currentVertexBuffer[slot].offset != offset ||
-            currentVertexBuffer[slot].stride != stride) {
-            currentVertexBuffer[slot].id = id;
-            currentVertexBuffer[slot].offset = offset;
-            currentVertexBuffer[slot].stride = stride;
-            glBindVertexBuffer(slot, id, offset, static_cast<int>(stride));
-        }
-    }
-
-    void bindIndexBuffer(uint32_t id) {
-        if (currentIndexBuffer != id) {
-            currentIndexBuffer = id;
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id);
-        }
-    }
-
-    void bindConstantBuffer(uint32_t id, uint32_t slot) {
-        if (currentConstantBuffer[slot] != id) {
-            currentConstantBuffer[slot] = id;
-            glBindBufferBase(GL_UNIFORM_BUFFER, slot, id);
-        }
-    }
-
-    void bindTexture2D(uint32_t id, uint32_t slot) {
-        if (currentTexture2D[slot] != id) {
-            currentTexture2D[slot] = id;
-            glActiveTexture(GL_TEXTURE0 + slot);
-            glBindTexture(GL_TEXTURE_2D, id);
-        }
-    }
-
-    void bindSamplerState(uint32_t id, uint32_t slot) {
-        if (currentSamplerState[slot] != id) {
-            currentSamplerState[slot] = id;
-            glBindSampler(slot, id);
-        }
-    }
-
-    void bindProgram(uint32_t id) {
-        if (currentProgram != id) {
-            currentProgram = id;
-            glUseProgram(id);
-        }
-    }
-
-    void bindVBO(uint32_t id) {
-        if (currentVBO != id) {
-            currentVBO = id;
-            glBindBuffer(GL_ARRAY_BUFFER, id);
-        }
-    }
-
-    void bindUBO(uint32_t id) {
-        if (currentUBO != id) {
-            currentUBO = id;
-            glBindBuffer(GL_UNIFORM_BUFFER, id);
-        }
-    }
-
-    void setDepthEnabled(bool isEnabled) {
-        if (currentDepthState.isEnabled != isEnabled) {
-            currentDepthState.isEnabled = isEnabled;
-            if (isEnabled) {
-                glEnable(GL_DEPTH_TEST);
-            }
-            else {
-                glDisable(GL_DEPTH_TEST);
-            }
-        }
-    }
-
-    void setDepthCompFunc(CompareFunc func) {
-        if (currentDepthState.compFunc != func) {
-            currentDepthState.compFunc = func;
-            glDepthFunc(gCompareFuncs[static_cast<size_t>(func)]);
-        }
-    }
-
-    void setDepthMask(bool mask) {
-        if (currentDepthState.mask != mask) {
-            currentDepthState.mask = mask;
-            glDepthMask(mask);
-        }
-    }
-
-    void setStencilEnabled(bool isEnabled) {
-        if (currentStencilState.isEnabled != isEnabled) {
-            currentStencilState.isEnabled = isEnabled;
-            if (isEnabled) {
-                glEnable(GL_STENCIL_TEST);
-            }
-            else {
-                glDisable(GL_STENCIL_TEST);
-            }
-        }
-    }
-
-    void setStencilFunc(CompareFunc frontFunc, CompareFunc backFunc, int ref, uint32_t readMask) {
-        if (currentStencilState.desc.frontFunc != frontFunc || currentStencilState.desc.backFunc != backFunc || currentStencilState.ref != ref || currentStencilState.desc.readMask != readMask) {
-            currentStencilState.desc.frontFunc = frontFunc;
-            currentStencilState.desc.backFunc = backFunc;
-            currentStencilState.ref = ref;
-            currentStencilState.desc.readMask = readMask;
-            glStencilFuncSeparate(GL_FRONT, gCompareFuncs[static_cast<size_t>(frontFunc)], ref, readMask);
-            glStencilFuncSeparate(GL_BACK, gCompareFuncs[static_cast<size_t>(backFunc)], ref, readMask);
-        }
-    }
-
-    void setStencilOpFront(StencilOp fail, StencilOp depthFail, StencilOp pass) {
-        if (currentStencilState.desc.frontFail != fail || currentStencilState.desc.frontDepthFail != depthFail || currentStencilState.desc.frontPass != pass) {
-            currentStencilState.desc.frontFail = fail;
-            currentStencilState.desc.frontDepthFail = depthFail;
-            currentStencilState.desc.frontPass = pass;
-            glStencilOpSeparate(GL_FRONT, gStencilOps[static_cast<size_t>(fail)], gStencilOps[static_cast<size_t>(depthFail)], gStencilOps[static_cast<size_t>(pass)]);
-        }
-    }
-
-    void setStencilOpBack(StencilOp fail, StencilOp depthFail, StencilOp pass) {
-        if (currentStencilState.desc.backFail != fail || currentStencilState.desc.backDepthFail != depthFail || currentStencilState.desc.backPass != pass) {
-            currentStencilState.desc.backFail = fail;
-            currentStencilState.desc.backDepthFail = depthFail;
-            currentStencilState.desc.backPass = pass;
-            glStencilOpSeparate(GL_BACK, gStencilOps[static_cast<size_t>(fail)], gStencilOps[static_cast<size_t>(depthFail)], gStencilOps[static_cast<size_t>(pass)]);
-        }
-    }
-
-    void setStencilMask(uint32_t writeMask) {
-        if (currentStencilState.desc.writeMask != writeMask) {
-            currentStencilState.desc.writeMask = writeMask;
-            glStencilMask(writeMask);
-        }
-    }
-
-    void setBlendEnabled(bool isEnabled) {
-        if (currentBlendState.desc.blendEnable != isEnabled) {
-            currentBlendState.desc.blendEnable = isEnabled;
-            if (isEnabled) {
-                glEnable(GL_BLEND);
-            }
-            else {
-                glDisable(GL_BLEND);
-            }
-        }
-    }
-
-    void setBlendFunc(BlendFactor srcBlend, BlendFactor dstBlend, BlendFactor srcBlendAlpha, BlendFactor dstBlendAlpha) {
-        if (currentBlendState.desc.srcBlend != srcBlend || currentBlendState.desc.dstBlend != dstBlend || 
-            currentBlendState.desc.srcBlendAlpha != srcBlendAlpha || currentBlendState.desc.dstBlendAlpha != dstBlendAlpha) {
-            currentBlendState.desc.srcBlend = srcBlend;
-            currentBlendState.desc.dstBlend = dstBlend; 
-            currentBlendState.desc.srcBlendAlpha = srcBlendAlpha;
-            currentBlendState.desc.dstBlendAlpha = dstBlendAlpha;
-            glBlendFuncSeparate(gBlendFactors[static_cast<size_t>(srcBlend)], gBlendFactors[static_cast<size_t>(dstBlend)],
-                gBlendFactors[static_cast<size_t>(srcBlendAlpha)], gBlendFactors[static_cast<size_t>(dstBlendAlpha)]);
-        }
-    }
-
-    void setBlendOp(BlendOp blendOp, BlendOp blendOpAlpha) {
-        if (currentBlendState.desc.blendOp != blendOp || currentBlendState.desc.blendOpAlpha != blendOpAlpha) {
-            currentBlendState.desc.blendOp = blendOp;
-            currentBlendState.desc.blendOpAlpha = blendOpAlpha;
-            glBlendEquationSeparate(gBlendOps[static_cast<size_t>(blendOp)], gBlendOps[static_cast<size_t>(blendOpAlpha)]);
-        }
-    }
-
-    void setBlendColorMask(const ColorMask &mask) {
-        if (currentBlendState.colorMask != mask) {
-            currentBlendState.colorMask = mask;
-            glColorMask(mask.r, mask.g, mask.b, mask.a);
-        }
-    }
-
-    void setRastCullFace(CullFace mode) {
-        if (currentRasterizerState.cullFace != mode) {
-            currentRasterizerState.cullFace = mode;
-            if (mode == CullFace::None) {
-                glDisable(GL_CULL_FACE);
-            }
-            else {
-                glEnable(GL_CULL_FACE);
-                glCullFace(gCullFaces[static_cast<size_t>(mode)]);
-            }
-        }
-    }
-
-    void setRastFillMode(FillMode mode) {
-        if (currentRasterizerState.fillMode != mode) {
-            currentRasterizerState.fillMode = mode;
-            glPolygonMode(GL_FRONT_AND_BACK, gFillModes[static_cast<size_t>(mode)]);
-        }
-    }
-
-    void setRastFrontFace(FrontFace mode) {
-        if (currentRasterizerState.frontFace != mode) {
-            currentRasterizerState.frontFace = mode;
-            glFrontFace(gFrontFaces[static_cast<size_t>(mode)]);
-        }
-    }
-
-    void setRastPolygonOffset(const PolygonOffset &desc) {
-        if (currentRasterizerState.polygonOffset != desc) {
-            currentRasterizerState.polygonOffset = desc;
-            if (desc.enabled) {
-                glEnable(GL_POLYGON_OFFSET_FILL);
-            }
-            else {
-                glDisable(GL_POLYGON_OFFSET_FILL);
-            }
-            glPolygonOffset(desc.factor, desc.units);
-        }
-    }
-
-    void setViewport(int x, int y, int w, int h) {
-        if (currentViewport.x != x || currentViewport.y != y || currentViewport.w != w || currentViewport.h != h) {
-            currentViewport.x = x;
-            currentViewport.y = y;
-            currentViewport.w = w;
-            currentViewport.h = h;
-            glViewport(x, y, w, h);
-        }
-    }
 };
 
 RenderContext::RenderContext() : impl(std::make_unique<Impl>()) {
@@ -858,24 +593,41 @@ void RenderContext::drawIndexedInstanced(PrimitiveType primType, uint32_t indexC
 }
 
 void RenderContext::setDepthState(bool depthTestEnabled, CompareFunc compareFunc, bool depthMask) {
-    impl->setDepthEnabled(depthTestEnabled);
-    impl->setDepthCompFunc(compareFunc);
-    impl->setDepthMask(depthMask);
+    if (depthTestEnabled) {
+        glEnable(GL_DEPTH_TEST);
+    }
+    else {
+        glDisable(GL_DEPTH_TEST);
+    }
+    glDepthFunc(gCompareFuncs[static_cast<size_t>(compareFunc)]);
+    glDepthMask(depthMask);
 }
 
 void RenderContext::setStencilState(bool enabled, const StencilTestDesc &desc, int ref) {
-    impl->setStencilEnabled(enabled);
-    impl->setStencilFunc(desc.frontFunc, desc.backFunc, ref, desc.readMask);
-    impl->setStencilOpFront(desc.frontFail, desc.frontDepthFail, desc.frontPass);
-    impl->setStencilOpBack(desc.backFail, desc.backDepthFail, desc.backPass);
-    impl->setStencilMask(desc.writeMask);
+    if (enabled) {
+        glEnable(GL_STENCIL_TEST);
+    }
+    else {
+        glDisable(GL_STENCIL_TEST);
+    }
+    glStencilFuncSeparate(GL_FRONT, gCompareFuncs[static_cast<size_t>(desc.frontFunc)], ref, desc.readMask);
+    glStencilFuncSeparate(GL_BACK, gCompareFuncs[static_cast<size_t>(desc.backFunc)], ref, desc.readMask);
+    glStencilOpSeparate(GL_FRONT, gStencilOps[static_cast<size_t>(desc.frontFail)], gStencilOps[static_cast<size_t>(desc.frontDepthFail)], gStencilOps[static_cast<size_t>(desc.frontPass)]);
+    glStencilOpSeparate(GL_BACK, gStencilOps[static_cast<size_t>(desc.backFail)], gStencilOps[static_cast<size_t>(desc.backDepthFail)], gStencilOps[static_cast<size_t>(desc.backPass)]);
+    glStencilMask(desc.writeMask);
 }
 
 void RenderContext::setBlendState(const BlendModeDesc &blendModeDesc, const ColorMask &colorMask) {
-    impl->setBlendEnabled(blendModeDesc.blendEnable);
-    impl->setBlendFunc(blendModeDesc.srcBlend, blendModeDesc.srcBlendAlpha, blendModeDesc.dstBlend, blendModeDesc.dstBlendAlpha);
-    impl->setBlendOp(blendModeDesc.blendOp, blendModeDesc.blendOpAlpha);
-    impl->setBlendColorMask(colorMask);
+    if (blendModeDesc.blendEnable) {
+        glEnable(GL_BLEND);
+    }
+    else {
+        glDisable(GL_BLEND);
+    }
+    glBlendFuncSeparate(gBlendFactors[static_cast<size_t>(blendModeDesc.srcBlend)], gBlendFactors[static_cast<size_t>(blendModeDesc.dstBlend)],
+        gBlendFactors[static_cast<size_t>(blendModeDesc.srcBlendAlpha)], gBlendFactors[static_cast<size_t>(blendModeDesc.dstBlendAlpha)]);
+    glBlendEquationSeparate(gBlendOps[static_cast<size_t>(blendModeDesc.blendOp)], gBlendOps[static_cast<size_t>(blendModeDesc.blendOpAlpha)]);
+    glColorMask(colorMask.r, colorMask.g, colorMask.b, colorMask.a);
 }
 
 void RenderContext::setBlendState(BlendMode blendMode, const ColorMask &colorMask) {
@@ -883,18 +635,30 @@ void RenderContext::setBlendState(BlendMode blendMode, const ColorMask &colorMas
 }
 
 void RenderContext::setRasterizerState(CullFace cullFace, FillMode fillMode, FrontFace frontFace, const PolygonOffset &polygonOffset) {
-    impl->setRastCullFace(cullFace);
-    impl->setRastFillMode(fillMode);
-    impl->setRastFrontFace(frontFace);
-    impl->setRastPolygonOffset(polygonOffset);
+    if (cullFace == CullFace::None) {
+        glDisable(GL_CULL_FACE);
+    }
+    else {
+        glEnable(GL_CULL_FACE);
+        glCullFace(gCullFaces[static_cast<size_t>(cullFace)]);
+    }
+    glPolygonMode(GL_FRONT_AND_BACK, gFillModes[static_cast<size_t>(fillMode)]);
+    glFrontFace(gFrontFaces[static_cast<size_t>(frontFace)]);
+    if (polygonOffset.enabled) {
+        glEnable(GL_POLYGON_OFFSET_FILL);
+    }
+    else {
+        glDisable(GL_POLYGON_OFFSET_FILL);
+    }
+    glPolygonOffset(polygonOffset.factor, polygonOffset.units);
 }
 
 void RenderContext::setViewport(int x, int y, int w, int h) {
-    impl->setViewport(x, y, w, h);
+    glViewport(x, y, w, h);
 }
 
 void RenderContext::setViewport(const glm::ivec2 &pos, const glm::ivec2 &size) {
-    setViewport(pos.x, pos.y, size.x, size.y);
+    glViewport(pos.x, pos.y, size.x, size.y);
 }
 
 HVertexFormat RenderContext::createVertexFormat(const std::vector<VertexElement> &desc) {
@@ -903,7 +667,7 @@ HVertexFormat RenderContext::createVertexFormat(const std::vector<VertexElement>
     impl->vertexFormats.push_back(HVertexFormat(obj));
     obj->elements = desc;
     glGenVertexArrays(1, &obj->id);
-    impl->bindVertexFormat(obj->id);
+    glBindVertexArray(obj->id);
     for (const auto &it : desc) {
         glEnableVertexAttribArray(it.index);
         glVertexAttribBinding(it.index, it.slot);
@@ -915,9 +679,6 @@ HVertexFormat RenderContext::createVertexFormat(const std::vector<VertexElement>
 
 void RenderContext::destroyVertexFormat(HVertexFormat &handle) {
     if (handle) {
-        if (impl->currentVertexFormat == handle->id) {
-            impl->currentVertexFormat = 0;
-        }
         glDeleteVertexArrays(1, &handle->id);
         HD_DELETE(handle.value);
         handle.invalidate();
@@ -926,7 +687,7 @@ void RenderContext::destroyVertexFormat(HVertexFormat &handle) {
 
 void RenderContext::bindVertexFormat(const HVertexFormat &handle) {
     HD_ASSERT(handle);
-    impl->bindVertexFormat(handle->id);
+    glBindVertexArray(handle->id);
 }
 
 HVertexBuffer RenderContext::createVertexBuffer(const void *data, uint32_t size, BufferUsage usage) {
@@ -942,14 +703,6 @@ HVertexBuffer RenderContext::createVertexBuffer(const void *data, uint32_t size,
 
 void RenderContext::destroyVertexBuffer(HVertexBuffer &handle) {
     if (handle) {
-        for (auto &it : impl->currentVertexBuffer) {
-            if (it.id == handle->id) {
-                it.id = it.offset = it.stride = 0;
-            }
-        }
-        if (impl->currentVBO == handle->id) {
-            impl->currentVBO = 0;
-        }
         glDeleteBuffers(1, &handle->id);
         HD_DELETE(handle.value);
         handle.invalidate();
@@ -960,13 +713,13 @@ void RenderContext::setVertexBufferData(HVertexBuffer &handle, const void *data,
     HD_ASSERT(handle);
     HD_ASSERT(size != 0);
     handle->size = size;
-    impl->bindVBO(handle->id);
+    glBindBuffer(GL_ARRAY_BUFFER, handle->id);
     glBufferData(GL_ARRAY_BUFFER, size, data, gBufferUsages[static_cast<size_t>(handle->usage)]);
 }
 
 void RenderContext::updateVertexBufferData(HVertexBuffer &handle, const void *data) {
     HD_ASSERT(handle);
-    impl->bindVBO(handle->id);
+    glBindBuffer(GL_ARRAY_BUFFER, handle->id);
     glBufferSubData(GL_ARRAY_BUFFER, 0, handle->size, data);
 }
 
@@ -974,19 +727,19 @@ void RenderContext::updateVertexBufferData(HVertexBuffer &handle, const void *da
     HD_ASSERT(handle);
     HD_ASSERT(size != 0);
     HD_ASSERT((offset + size) < handle->size);
-    impl->bindVBO(handle->id);
+    glBindBuffer(GL_ARRAY_BUFFER, handle->id);
     glBufferSubData(GL_ARRAY_BUFFER, offset, size, data);
 }
 
 void *RenderContext::mapVertexBuffer(HVertexBuffer &handle, BufferAccess access) {
     HD_ASSERT(handle);
-    impl->bindVBO(handle->id);
+    glBindBuffer(GL_ARRAY_BUFFER, handle->id);
     return glMapBuffer(GL_ARRAY_BUFFER, gBufferAccesses[static_cast<size_t>(access)]);
 }
 
 void RenderContext::unmapVertexBuffer(HVertexBuffer &handle) {
     HD_ASSERT(handle);
-    impl->bindVBO(handle->id);
+    glBindBuffer(GL_ARRAY_BUFFER, handle->id);
     glUnmapBuffer(GL_ARRAY_BUFFER);
 }
 
@@ -994,7 +747,7 @@ void RenderContext::bindVertexBuffer(const HVertexBuffer &handle, uint32_t slot,
     HD_ASSERT(handle);
     HD_ASSERT(slot < MAX_VERTEX_BUFFERS);
     HD_ASSERT(stride != 0);
-    impl->bindVertexBuffer(handle->id, slot, offset, stride);
+    glBindVertexBuffer(slot, handle->id, offset, stride);
 }
 
 HIndexBuffer RenderContext::createIndexBuffer(const void *data, uint32_t size, BufferUsage usage) {
@@ -1010,9 +763,6 @@ HIndexBuffer RenderContext::createIndexBuffer(const void *data, uint32_t size, B
 
 void RenderContext::destroyIndexBuffer(HIndexBuffer &handle) {
     if (handle) {
-        if (impl->currentIndexBuffer == handle->id) {
-            impl->currentIndexBuffer = 0;
-        }
         glDeleteBuffers(1, &handle->id);
         HD_DELETE(handle.value);
         handle.invalidate();
@@ -1023,13 +773,13 @@ void RenderContext::setIndexBufferData(HIndexBuffer &handle, const void *data, u
     HD_ASSERT(handle);
     HD_ASSERT(size != 0);
     handle->size = size;
-    impl->bindIndexBuffer(handle->id);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, handle->id);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, data, gBufferUsages[static_cast<size_t>(handle->usage)]);
 }
 
 void RenderContext::updateIndexBufferData(HIndexBuffer &handle, const void *data) {
     HD_ASSERT(handle);
-    impl->bindIndexBuffer(handle->id);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, handle->id);
     glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, handle->size, data);
 }
 
@@ -1037,25 +787,25 @@ void RenderContext::updateIndexBufferData(HIndexBuffer &handle, const void *data
     HD_ASSERT(handle);
     HD_ASSERT(size != 0);
     HD_ASSERT((offset + size) < handle->size);
-    impl->bindIndexBuffer(handle->id);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, handle->id);
     glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, size, data);
 }
 
 void *RenderContext::mapIndexBuffer(HIndexBuffer &handle, BufferAccess access) {
     HD_ASSERT(handle);
-    impl->bindIndexBuffer(handle->id);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, handle->id);
     return glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, gBufferAccesses[static_cast<size_t>(access)]);
 }
 
 void RenderContext::unmapIndexBuffer(HIndexBuffer &handle) {
     HD_ASSERT(handle);
-    impl->bindIndexBuffer(handle->id);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, handle->id);
     glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
 }
 
 void RenderContext::bindIndexBuffer(const HIndexBuffer &handle) {
     HD_ASSERT(handle);
-    impl->bindIndexBuffer(handle->id);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, handle->id);
 }
 
 HConstantBuffer RenderContext::createConstantBuffer(const void *data, uint32_t size, BufferUsage usage) {
@@ -1071,14 +821,6 @@ HConstantBuffer RenderContext::createConstantBuffer(const void *data, uint32_t s
 
 void RenderContext::destroyConstantBuffer(HConstantBuffer &handle) {
     if (handle) {
-        for (auto &it : impl->currentConstantBuffer) {
-            if (it == handle->id) {
-                it = 0;
-            }
-        }
-        if (impl->currentUBO == handle->id) {
-            impl->currentUBO = 0;
-        }
         glDeleteBuffers(1, &handle->id);
         HD_DELETE(handle.value);
         handle.invalidate();
@@ -1089,13 +831,13 @@ void RenderContext::setConstantBufferData(HConstantBuffer &handle, const void *d
     HD_ASSERT(handle);
     HD_ASSERT(size != 0);
     handle->size = size;
-    impl->bindUBO(handle->id);
+    glBindBuffer(GL_UNIFORM_BUFFER, handle->id);
     glBufferData(GL_UNIFORM_BUFFER, size, data, gBufferUsages[static_cast<size_t>(handle->usage)]);
 }
 
 void RenderContext::updateConstantBufferData(HConstantBuffer &handle, const void *data) {
     HD_ASSERT(handle);
-    impl->bindUBO(handle->id);
+    glBindBuffer(GL_UNIFORM_BUFFER, handle->id);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, handle->size, data);
 }
 
@@ -1103,26 +845,26 @@ void RenderContext::updateConstantBufferData(HConstantBuffer &handle, const void
     HD_ASSERT(handle);
     HD_ASSERT(size != 0);
     HD_ASSERT((offset + size) < handle->size);
-    impl->bindUBO(handle->id);
+    glBindBuffer(GL_UNIFORM_BUFFER, handle->id);
     glBufferSubData(GL_UNIFORM_BUFFER, offset, size, data);
 }
 
 void *RenderContext::mapConstantBuffer(HConstantBuffer &handle, BufferAccess access) {
     HD_ASSERT(handle);
-    impl->bindUBO(handle->id);
+    glBindBuffer(GL_UNIFORM_BUFFER, handle->id);
     return glMapBuffer(GL_UNIFORM_BUFFER, gBufferAccesses[static_cast<size_t>(access)]);
 }
 
 void RenderContext::unmapConstantBuffer(HConstantBuffer &handle) {
     HD_ASSERT(handle);
-    impl->bindUBO(handle->id);
+    glBindBuffer(GL_UNIFORM_BUFFER, handle->id);
     glUnmapBuffer(GL_UNIFORM_BUFFER);
 }
 
 void RenderContext::bindConstantBuffer(const HConstantBuffer &handle, uint32_t slot) {
     HD_ASSERT(handle);
     HD_ASSERT(slot < MAX_CONSTANT_BUFFERS);
-    impl->bindConstantBuffer(handle->id, slot);
+    glBindBufferBase(GL_UNIFORM_BUFFER, slot, handle->id);
 }
 
 HTexture2D RenderContext::createTexture2D(const void *data, uint32_t w, uint32_t h, TextureFormat format) {
@@ -1132,7 +874,7 @@ HTexture2D RenderContext::createTexture2D(const void *data, uint32_t w, uint32_t
     obj->format = format;
     obj->size = glm::ivec2(w, h);
     glGenTextures(1, &obj->id);
-    impl->bindTexture2D(obj->id, 0);
+    glBindTexture(GL_TEXTURE_2D, obj->id);
     glTexImage2D(GL_TEXTURE_2D, 0, gTextureInternalFormats[static_cast<size_t>(format)], w, h, 0, gTextureExternalFormats[static_cast<size_t>(format)], gTextureDataTypes[static_cast<size_t>(format)], data);
     glGenerateMipmap(GL_TEXTURE_2D);
     return impl->textures2D.back();
@@ -1155,11 +897,6 @@ HTexture2D RenderContext::createTexture2DFromFile(const std::string &filename) {
 
 void RenderContext::destroyTexture2D(HTexture2D &handle) {
     if (handle) {
-        for (auto &it : impl->currentTexture2D) {
-            if (it == handle->id) {
-                it = 0;
-            }
-        }
         glDeleteTextures(1, &handle->id);
         HD_DELETE(handle.value);
         handle.invalidate();
@@ -1169,7 +906,8 @@ void RenderContext::destroyTexture2D(HTexture2D &handle) {
 void RenderContext::bindTexture2D(const HTexture2D &handle, uint32_t slot) {
     HD_ASSERT(handle);
     HD_ASSERT(slot < MAX_TEXTURES);
-    impl->bindTexture2D(handle->id, slot);
+    glActiveTexture(GL_TEXTURE0 + slot);
+    glBindTexture(GL_TEXTURE_2D, handle->id);
 }
 
 HSamplerState RenderContext::createSamplerState(SamplerFilter filter, uint32_t maxAnisotropy) {
@@ -1227,11 +965,6 @@ HSamplerState RenderContext::createSamplerState(SamplerFilter filter, uint32_t m
 
 void RenderContext::destroySamplerState(HSamplerState &handle) {
     if (handle) {
-        for (auto &it : impl->currentSamplerState) {
-            if (it == handle->id) {
-                it = 0;
-            }
-        }
         glDeleteSamplers(1, &handle->id);
         HD_DELETE(handle.value);
         handle.invalidate();
@@ -1241,7 +974,7 @@ void RenderContext::destroySamplerState(HSamplerState &handle) {
 void RenderContext::bindSamplerState(const HSamplerState &handle, uint32_t slot) {
     HD_ASSERT(handle);
     HD_ASSERT(slot < MAX_SAMPLER_STATES);
-    impl->bindSamplerState(handle->id, slot);
+    glBindSampler(slot, handle->id);
 }
 
 HProgram RenderContext::createProgram(const std::string &name, const std::string &vsCode, const std::string &psCode, const std::string &defines) {
@@ -1353,9 +1086,6 @@ HProgram RenderContext::createProgramFromFile(const std::string &filename, const
 
 void RenderContext::destroyProgram(HProgram &handle) {
     if (handle) {
-        if (impl->currentProgram == handle->id) {
-            impl->currentProgram = 0;
-        }
         glDeleteProgram(handle->id);
         HD_DELETE(handle.value);
         handle.invalidate();
@@ -1370,78 +1100,66 @@ HProgramConstant RenderContext::getProgramConstantID(const HProgram &handle, con
 
 void RenderContext::bindProgram(const HProgram &handle) {
     HD_ASSERT(handle);
-    impl->bindProgram(handle->id);
+    glUseProgram(handle->id);
 }
 
 void RenderContext::setProgramConstant(const HProgramConstant &id, int value) {
     HD_ASSERT(id);
-    HD_ASSERT(impl->currentProgram != 0);
     glUniform1i(id.value, value);
 }
 
 void RenderContext::setProgramConstant(const HProgramConstant &id, float value) {
     HD_ASSERT(id);
-    HD_ASSERT(impl->currentProgram != 0);
     glUniform1f(id.value, value);
 }
 
 void RenderContext::setProgramConstant(const HProgramConstant &id, const glm::vec2 &value) {
     HD_ASSERT(id);
-    HD_ASSERT(impl->currentProgram != 0);
     glUniform2f(id.value, value.x, value.y);
 }
 
 void RenderContext::setProgramConstant(const HProgramConstant &id, const glm::vec3 &value) {
     HD_ASSERT(id);
-    HD_ASSERT(impl->currentProgram != 0);
     glUniform3f(id.value, value.x, value.y, value.z);
 }
 
 void RenderContext::setProgramConstant(const HProgramConstant &id, const glm::vec4 &value) {
     HD_ASSERT(id);
-    HD_ASSERT(impl->currentProgram != 0);
     glUniform4f(id.value, value.x, value.y, value.z, value.w);
 }
 
 void RenderContext::setProgramConstant(const HProgramConstant &id, const glm::mat4 &value) {
     HD_ASSERT(id);
-    HD_ASSERT(impl->currentProgram != 0);
     glUniformMatrix4fv(id.value, 1, false, reinterpret_cast<const float*>(&value));
 }
 
 void RenderContext::setProgramConstant(const HProgramConstant &id, const int *value, uint32_t count) {
     HD_ASSERT(id);
-    HD_ASSERT(impl->currentProgram != 0);
     glUniform1iv(id.value, count, value);
 }
 
 void RenderContext::setProgramConstant(const HProgramConstant &id, const float *value, uint32_t count) {
     HD_ASSERT(id);
-    HD_ASSERT(impl->currentProgram != 0);
     glUniform1fv(id.value, count, value);
 }
 
 void RenderContext::setProgramConstant(const HProgramConstant &id, const glm::vec2 *value, uint32_t count) {
     HD_ASSERT(id);
-    HD_ASSERT(impl->currentProgram != 0);
     glUniform2fv(id.value, count, reinterpret_cast<const float*>(value));
 }
 
 void RenderContext::setProgramConstant(const HProgramConstant &id, const glm::vec3 *value, uint32_t count) {
     HD_ASSERT(id);
-    HD_ASSERT(impl->currentProgram != 0);
     glUniform3fv(id.value, count, reinterpret_cast<const float*>(value));
 }
 
 void RenderContext::setProgramConstant(const HProgramConstant &id, const glm::vec4 *value, uint32_t count) {
     HD_ASSERT(id);
-    HD_ASSERT(impl->currentProgram != 0);
     glUniform4fv(id.value, count, reinterpret_cast<const float*>(value));
 }
 
 void RenderContext::setProgramConstant(const HProgramConstant &id, const glm::mat4 *value, uint32_t count) {
     HD_ASSERT(id);
-    HD_ASSERT(impl->currentProgram != 0);
     glUniformMatrix4fv(id.value, count, false, reinterpret_cast<const float*>(value));
 }
 
