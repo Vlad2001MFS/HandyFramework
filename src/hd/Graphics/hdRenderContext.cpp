@@ -504,9 +504,15 @@ void RenderContext::create(const Window &window) {
         HD_LOG_ERROR("Failed to initialize GLEW. Errors: %s", glewGetErrorString(error));
     }
 
-    if (window.getOpenGLContextSettings().isDebug && GLEW_ARB_debug_output) {
-        glEnable(GL_DEBUG_OUTPUT);
-        glDebugMessageCallback(debugCallback, nullptr);
+    if (window.getOpenGLContextSettings().isDebug) {
+        if (GLEW_ARB_debug_output) {
+            glEnable(GL_DEBUG_OUTPUT);
+            glDebugMessageCallback(debugCallback, nullptr);
+            glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, true);
+        }
+        else {
+            HD_LOG_WARNING("Failed to enable OpenGL debug output. Extension 'GLEW_ARB_debug_output' not supported");
+        }
     }
 
     setViewport(0, 0, window.getSizeX(), window.getSizeY());
