@@ -1004,28 +1004,32 @@ HSamplerState RenderContext::createSamplerState(SamplerFilter filter, uint32_t m
     obj->w = w;
     obj->lodBias = lodBias;
     if (borderColor) {
-        memcpy(obj->borderColor, borderColor, sizeof(obj->borderColor));
+        for (size_t i = 0; i < 4; i++) {
+            obj->borderColor[i] = borderColor[i];
+        }
     }
     else {
-        memset(obj->borderColor, 0, sizeof(obj->borderColor));
+        for (size_t i = 0; i < 4; i++) {
+            obj->borderColor[i] = 0.0f;
+        }
     }
     obj->minLod = minLod;
     obj->maxLod = maxLod;
     glGenSamplers(1, &obj->id);
-    glSamplerParameteri(obj->id, GL_TEXTURE_MIN_FILTER, gSamplerMinFilter[static_cast<size_t>(filter)]);
-    glSamplerParameteri(obj->id, GL_TEXTURE_MAG_FILTER, gSamplerMagFilter[static_cast<size_t>(filter)]);
-    if (filter == SamplerFilter::Anisotropic) {
-        glSamplerParameteri(obj->id, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
+    glSamplerParameteri(obj->id, GL_TEXTURE_MIN_FILTER, gSamplerMinFilter[static_cast<size_t>(obj->filter)]);
+    glSamplerParameteri(obj->id, GL_TEXTURE_MAG_FILTER, gSamplerMagFilter[static_cast<size_t>(obj->filter)]);
+    if (obj->filter == SamplerFilter::Anisotropic) {
+        glSamplerParameteri(obj->id, GL_TEXTURE_MAX_ANISOTROPY_EXT, obj->maxAnisotropy);
     }
-    glSamplerParameteri(obj->id, GL_TEXTURE_COMPARE_FUNC, gCompareFuncs[static_cast<GLenum>(compareFunc)]);
-    glSamplerParameteri(obj->id, GL_TEXTURE_COMPARE_MODE, compareRefToTex ? GL_COMPARE_REF_TO_TEXTURE : GL_NONE);
-    glSamplerParameteri(obj->id, GL_TEXTURE_WRAP_S, gSamplerAddressModes[static_cast<size_t>(u)]);
-    glSamplerParameteri(obj->id, GL_TEXTURE_WRAP_T, gSamplerAddressModes[static_cast<size_t>(v)]);
-    glSamplerParameteri(obj->id, GL_TEXTURE_WRAP_R, gSamplerAddressModes[static_cast<size_t>(w)]);
-    glSamplerParameterf(obj->id, GL_TEXTURE_LOD_BIAS, lodBias);
-    glSamplerParameterfv(obj->id, GL_TEXTURE_BORDER_COLOR, borderColor);
-    glSamplerParameterf(obj->id, GL_TEXTURE_MIN_LOD, minLod);
-    glSamplerParameterf(obj->id, GL_TEXTURE_MAX_LOD, maxLod);
+    glSamplerParameteri(obj->id, GL_TEXTURE_COMPARE_FUNC, gCompareFuncs[static_cast<GLenum>(obj->compareFunc)]);
+    glSamplerParameteri(obj->id, GL_TEXTURE_COMPARE_MODE, obj->compareRefToTexture ? GL_COMPARE_REF_TO_TEXTURE : GL_NONE);
+    glSamplerParameteri(obj->id, GL_TEXTURE_WRAP_S, gSamplerAddressModes[static_cast<size_t>(obj->u)]);
+    glSamplerParameteri(obj->id, GL_TEXTURE_WRAP_T, gSamplerAddressModes[static_cast<size_t>(obj->v)]);
+    glSamplerParameteri(obj->id, GL_TEXTURE_WRAP_R, gSamplerAddressModes[static_cast<size_t>(obj->w)]);
+    glSamplerParameterf(obj->id, GL_TEXTURE_LOD_BIAS, obj->lodBias);
+    glSamplerParameterfv(obj->id, GL_TEXTURE_BORDER_COLOR, obj->borderColor);
+    glSamplerParameterf(obj->id, GL_TEXTURE_MIN_LOD, obj->minLod);
+    glSamplerParameterf(obj->id, GL_TEXTURE_MAX_LOD, obj->maxLod);
     return impl->samplerStates.back();
 }
 
