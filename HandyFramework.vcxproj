@@ -34,6 +34,7 @@
     <ClCompile Include="src\hd\IO\hdSerializer.cpp" />
     <ClCompile Include="src\hd\IO\hdSerializerRW.cpp" />
     <ClCompile Include="src\hd\IO\hdStream.cpp" />
+    <ClCompile Include="src\hd\Math\hdFirstPersonCamera.cpp" />
     <ClCompile Include="src\hd\Math\hdMathUtils.cpp" />
     <ClCompile Include="src\hd\System\hdBaseApp.cpp" />
     <ClCompile Include="src\hd\System\hdOSSpecificInfo.cpp" />
@@ -146,6 +147,7 @@
     <ClInclude Include="src\hd\IO\hdSerializer.hpp" />
     <ClInclude Include="src\hd\IO\hdSerializerRW.hpp" />
     <ClInclude Include="src\hd\IO\hdStream.hpp" />
+    <ClInclude Include="src\hd\Math\hdFirstPersonCamera.h" />
     <ClInclude Include="src\hd\Math\hdMathUtils.hpp" />
     <ClInclude Include="src\hd\System\hdBaseApp.hpp" />
     <ClInclude Include="src\hd\System\hdOSSpecificInfo.hpp" />

@@ -96,6 +96,9 @@
     <ClCompile Include="src\hd\Graphics\hdRenderContext.cpp">
       <Filter>src\hd\Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="src\hd\Math\hdFirstPersonCamera.cpp">
+      <Filter>src\hd\Math</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\hd\Core\hdClock.hpp">
@@ -430,6 +433,9 @@
     </ClInclude>
     <ClInclude Include="src\hd\Graphics\hdRenderContext.hpp">
       <Filter>src\hd\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\hd\Math\hdFirstPersonCamera.h">
+      <Filter>src\hd\Math</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

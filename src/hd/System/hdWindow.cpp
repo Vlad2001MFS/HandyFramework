@@ -64,7 +64,6 @@ struct Window::Impl {
     WindowFlags flags = WindowFlags::None;
     OpenGLContextSettings contextSettings;
     bool isFocused = true;
-    bool isExit = false;
 
     void createWindow(const std::string &title, uint32_t w, uint32_t h, WindowFlags flags, bool forOpenGL) {
         auto sdlFlags = SDL_WINDOW_SHOWN | getSDLWindowFlagsFromWindowFlags(flags);
@@ -255,20 +254,11 @@ bool Window::processEvent(WindowEvent &e) {
                 e.mouseButton.y = sdlEvent.button.y;
                 return isFocused();
             case SDL_MOUSEMOTION:
-                static auto lastX = 0, lastY = 0;
-                static auto first = true;
-                if (first) {
-                    first = false;
-                    lastX = sdlEvent.motion.x;
-                    lastY = sdlEvent.motion.y;
-                }
                 e.type = WindowEventType::MouseMove;
                 e.mouseMove.x = sdlEvent.motion.x;
                 e.mouseMove.y = sdlEvent.motion.y;
-                e.mouseMove.deltaX = lastX - sdlEvent.motion.x;
-                e.mouseMove.deltaY = lastY - sdlEvent.motion.y;
-                lastX = sdlEvent.motion.x;
-                lastY = sdlEvent.motion.y;
+                e.mouseMove.deltaX = sdlEvent.motion.xrel;
+                e.mouseMove.deltaY = sdlEvent.motion.yrel;
                 return isFocused();
         }
     }
@@ -287,7 +277,9 @@ void Window::swapBuffers() {
 }
 
 void Window::close() {
-    impl->isExit = true;
+    SDL_Event event;
+    event.type = SDL_QUIT;
+    SDL_PushEvent(&event);
 }
 
 void Window::setHighPriorityProcess() {
