@@ -943,6 +943,23 @@ HTexture2DArray RenderContext::createTexture2DArray(const void *data, const glm:
     return createTexture2DArray(data, size.x, size.y, format, layers);
 }
 
+HTexture2DArray RenderContext::createTexture2DArrayFromFiles(const std::vector<std::string> &filenames) {
+    HD_ASSERT(!filenames.empty());
+    std::vector<hd::Image> images;
+    images.reserve(filenames.size());
+    for (const auto filename : filenames) {
+        images.emplace_back(filename);
+        if (images.size() > 1 && images[0].getWidth() != images[1].getWidth() && images[0].getHeight() != images[1].getHeight()) {
+            HD_LOG_ERROR("Failed to create Texture2DArray from files:\n%s\nThe files has a different image sizes", hd::StringUtils::fromVector(filenames, "'", "'", "\n"));
+        }
+    }
+    auto handle = createTexture2DArray(nullptr, images.front().getWidth(), images.front().getHeight(), hd::TextureFormat::RGBA8, filenames.size());
+    for (size_t i = 0; i < images.size(); i++) {
+        setTexture2DArrayLayerData(handle, i, images[i].getPixels(), hd::TextureFormat::RGBA8);
+    }
+    return handle;
+}
+
 void RenderContext::setTexture2DArrayLayerData(const HTexture2DArray &handle, uint32_t layer, const void *data, TextureFormat format) {
    HD_ASSERT(handle);
    glBindTexture(GL_TEXTURE_2D_ARRAY, handle->id);

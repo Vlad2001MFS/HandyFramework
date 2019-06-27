@@ -300,6 +300,7 @@ public:
     
     HTexture2DArray createTexture2DArray(const void *data, uint32_t w, uint32_t h, TextureFormat format, uint32_t layers);
     HTexture2DArray createTexture2DArray(const void *data, const glm::ivec2 &size, TextureFormat format, uint32_t layers);
+    HTexture2DArray createTexture2DArrayFromFiles(const std::vector<std::string> &filenames);
     void setTexture2DArrayLayerData(const HTexture2DArray &handle, uint32_t layer, const void *data, TextureFormat format);
     void setTexture2DArrayLayerData(const HTexture2DArray &handle, uint32_t layer, StreamReader &stream);
     void setTexture2DArrayLayerData(const HTexture2DArray &handle, uint32_t layer, const std::string &filename);
