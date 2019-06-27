@@ -56,6 +56,19 @@ public:
     static std::string fromUint64(uint64_t value);
     static std::string fromFloat(float value);
     static std::string fromDouble(double value);
+    static std::string fromVector(const std::vector<std::string> &v, const std::string &prefix, const std::string &postfix, const std::string &separator);
+
+    template<typename T, typename F>
+    static std::string fromVector(const std::vector<T> &v, const std::string &prefix, const std::string &postfix, const std::string &separator, F getStringFunc) {
+        std::string str;
+        for (size_t i = 0; i < v.size(); i++) {
+            str += prefix + getStringFunc(v[i]) + postfix;
+            if (i < (v.size() - 1)) {
+                str += separator;
+            }
+        }
+        return str;
+    }
 };
 
 }

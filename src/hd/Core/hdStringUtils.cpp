@@ -354,4 +354,8 @@ std::string StringUtils::fromDouble(double value) {
     return std::to_string(value);
 }
 
+std::string StringUtils::fromVector(const std::vector<std::string> &v, const std::string &prefix, const std::string &postfix, const std::string &separator) {
+    return fromVector(v, prefix, postfix, separator, [](const std::string &str) { return str; });
+}
+
 }
