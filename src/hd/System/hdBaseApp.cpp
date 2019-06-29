@@ -25,17 +25,21 @@ void BaseApp::run() {
             if (event.type == hd::WindowEventType::Close) {
                 isExit = true;
             }
-            onEvent(event);
+            if (mWindow.isFocused()) {
+                onEvent(event);
+            }
         }
 
-        if (Clock::getElapsedTime(updateTimer) > UPDATE_TIME) {
-            onFixedUpdate();
-            updateTimer = Clock::getTime();
-        }
-        onUpdate();
-        onDraw();
+        if (mWindow.isFocused()) {
+            if (Clock::getElapsedTime(updateTimer) > UPDATE_TIME) {
+                onFixedUpdate();
+                updateTimer = Clock::getTime();
+            }
+            onUpdate();
+            onDraw();
 
-        mFPSCounter.update();
+            mFPSCounter.update();
+        }
     }
     onShutdown();
 }
