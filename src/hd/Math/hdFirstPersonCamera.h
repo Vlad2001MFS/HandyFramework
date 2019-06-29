@@ -13,9 +13,6 @@ public:
 	void translate(const glm::vec3 &offset);
 	void rotate(float x, float y, float z);
 	void rotate(const glm::vec3 &angles);
-	//void AutoRotate(float speed = 0.2f);
-	//void AutoMove(float speed = 0.2f, SDL_Scancode forward = SDL_SCANCODE_W, SDL_Scancode backward = SDL_SCANCODE_S,
-	//	SDL_Scancode leftward = SDL_SCANCODE_A, SDL_Scancode rightward = SDL_SCANCODE_D);
 
 	void setPosition(float x, float y, float z);
 	void setPosition(const glm::vec3 &pos);

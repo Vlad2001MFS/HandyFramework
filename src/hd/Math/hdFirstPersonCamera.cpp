@@ -33,21 +33,6 @@ void FirstPersonCamera::rotate(const glm::vec3 &angles) {
     setRotation(mRot + angles);
 }
 
-/*void FirstPersonCamera::AutoRotate(float speed)
-{
-	Rotate(RAD(speed * engine->GetCursorOffset().y), RAD(speed * engine->GetCursorOffset().x), 0.0f);
-	engine->SetCursorPos(engine->GetWindowCenter());
-}
-
-void FirstPersonCamera::AutoMove(float speed, 
-	SDL_Scancode forward, SDL_Scancode backward, SDL_Scancode leftward, SDL_Scancode rightward)
-{
-	if (engine->GetKeyState(forward))	Translate( 0.0f,  0.0f, -speed);
-	if (engine->GetKeyState(backward))	Translate( 0.0f,  0.0f,  speed);
-	if (engine->GetKeyState(leftward))	Translate(-speed, 0.0f,  0.0f);
-	if (engine->GetKeyState(rightward)) Translate( speed, 0.0f,  0.0f);
-}*/
-
 void FirstPersonCamera::setPosition(float x, float y, float z) {
     mPos.x = x;
     mPos.y = y;
