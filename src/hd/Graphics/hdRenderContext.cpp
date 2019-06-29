@@ -696,6 +696,7 @@ HVertexFormat RenderContext::createVertexFormat(const std::vector<VertexElement>
 
 void RenderContext::destroyVertexFormat(HVertexFormat &handle) {
     if (handle) {
+        impl->vertexFormats.erase(std::remove(impl->vertexFormats.begin(), impl->vertexFormats.end(), handle), impl->vertexFormats.end());
         glDeleteVertexArrays(1, &handle->id);
         HD_DELETE(handle.value);
         handle.invalidate();
@@ -720,6 +721,7 @@ HVertexBuffer RenderContext::createVertexBuffer(const void *data, uint32_t size,
 
 void RenderContext::destroyVertexBuffer(HVertexBuffer &handle) {
     if (handle) {
+        impl->vertexBuffers.erase(std::remove(impl->vertexBuffers.begin(), impl->vertexBuffers.end(), handle), impl->vertexBuffers.end());
         glDeleteBuffers(1, &handle->id);
         HD_DELETE(handle.value);
         handle.invalidate();
@@ -780,6 +782,7 @@ HIndexBuffer RenderContext::createIndexBuffer(const void *data, uint32_t size, B
 
 void RenderContext::destroyIndexBuffer(HIndexBuffer &handle) {
     if (handle) {
+        impl->indexBuffers.erase(std::remove(impl->indexBuffers.begin(), impl->indexBuffers.end(), handle), impl->indexBuffers.end());
         glDeleteBuffers(1, &handle->id);
         HD_DELETE(handle.value);
         handle.invalidate();
@@ -838,6 +841,7 @@ HConstantBuffer RenderContext::createConstantBuffer(const void *data, uint32_t s
 
 void RenderContext::destroyConstantBuffer(HConstantBuffer &handle) {
     if (handle) {
+        impl->constantBuffers.erase(std::remove(impl->constantBuffers.begin(), impl->constantBuffers.end(), handle), impl->constantBuffers.end());
         glDeleteBuffers(1, &handle->id);
         HD_DELETE(handle.value);
         handle.invalidate();
@@ -914,6 +918,7 @@ HTexture2D RenderContext::createTexture2DFromFile(const std::string &filename) {
 
 void RenderContext::destroyTexture2D(HTexture2D &handle) {
     if (handle) {
+        impl->textures2D.erase(std::remove(impl->textures2D.begin(), impl->textures2D.end(), handle), impl->textures2D.end());
         glDeleteTextures(1, &handle->id);
         HD_DELETE(handle.value);
         handle.invalidate();
@@ -980,6 +985,7 @@ void RenderContext::setTexture2DArrayLayerData(const HTexture2DArray &handle, ui
 
 void RenderContext::destroyTexture2DArray(HTexture2DArray &handle) {
     if (handle) {
+        impl->texture2DArrays.erase(std::remove(impl->texture2DArrays.begin(), impl->texture2DArrays.end(), handle), impl->texture2DArrays.end());
         glDeleteTextures(1, &handle->id);
         HD_DELETE(handle.value);
         handle.invalidate();
@@ -1052,6 +1058,7 @@ HSamplerState RenderContext::createSamplerState(SamplerFilter filter, uint32_t m
 
 void RenderContext::destroySamplerState(HSamplerState &handle) {
     if (handle) {
+        impl->samplerStates.erase(std::remove(impl->samplerStates.begin(), impl->samplerStates.end(), handle), impl->samplerStates.end());
         glDeleteSamplers(1, &handle->id);
         HD_DELETE(handle.value);
         handle.invalidate();
@@ -1173,6 +1180,7 @@ HProgram RenderContext::createProgramFromFile(const std::string &filename, const
 
 void RenderContext::destroyProgram(HProgram &handle) {
     if (handle) {
+        impl->programs.erase(std::remove(impl->programs.begin(), impl->programs.end(), handle), impl->programs.end());
         glDeleteProgram(handle->id);
         HD_DELETE(handle.value);
         handle.invalidate();
