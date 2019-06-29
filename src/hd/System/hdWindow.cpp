@@ -79,6 +79,13 @@ struct Window::Impl {
         if (this->windowSurface->format->format != SDL_PIXELFORMAT_RGB888) {
             HD_LOG_ERROR("Unsupported window pixel format '%s'", SDL_GetPixelFormatName(this->windowSurface->format->format));
         }
+
+        SDL_Event resizeEvent;
+        resizeEvent.type = SDL_WINDOWEVENT;
+        resizeEvent.window.event = SDL_WINDOWEVENT_RESIZED;
+        resizeEvent.window.data1 = w;
+        resizeEvent.window.data2 = h;
+        SDL_PushEvent(&resizeEvent);
     }
 
     void createContext(const OpenGLContextSettings &contextSettings) {
