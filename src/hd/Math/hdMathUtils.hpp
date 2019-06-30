@@ -1,6 +1,6 @@
 #pragma once
 #include "../Core/hdCommon.hpp"
-//#include "glm/glm.hpp"
+#include "../../3rd/include/glm/glm.hpp"
 
 namespace hd {
 
@@ -11,18 +11,37 @@ public:
     static bool compareDouble(double a, double b);
 
     static int randomInt32(int min, int max);
+};
 
-    /*static glm::vec2 rotateVertex(const glm::vec2 &v, float angle);
-    static float getSignOfHalfPlane(const glm::vec2 &pointOnLine1, const glm::vec2 &pointOnLine2, const glm::vec2 &point);
-    static bool isPointOnRect(const glm::vec2 &point, const glm::vec2 *rectVertices, const glm::vec2 &rectCenter);
-    static bool isPointOnRect(const glm::ivec2 &point, const glm::ivec2 &rcPos, const glm::ivec2 &rcSize);
-    static bool isPointOnRect(const glm::vec2 &point, const glm::vec2 &rcPos, const glm::vec2 &rcSize);
-    static bool isPointOnCircle(const glm::ivec2 &point, const glm::ivec2 &circlePos, int circleRadius);
-    static bool isPointOnCircle(const glm::vec2 &point, const glm::vec2 &circlePos, float circleRadius);
-    static bool isRectIntersectRect(const glm::ivec2 &rc1Pos, const glm::ivec2 &rc1Size, const glm::ivec2 &rc2Pos, const glm::ivec2 &rc2Size);
-    static bool isRectIntersectRect(const glm::vec2 &rc1Pos, const glm::vec2 &rc1Size, const glm::vec2 &rc2Pos, const glm::vec2 &rc2Size);
-    static bool isRectIntersectCircle(const glm::ivec2 &rcPos, const glm::ivec2 &rcSize, const glm::ivec2 &circlePos, int circleRadius);
-    static bool isRectIntersectCircle(const glm::vec2 &rcPos, const glm::vec2 &rcSize, const glm::vec2 &circlePos, float circleRadius);*/
+class AABB {
+public:
+    AABB(const glm::vec3 &pos, const glm::vec3 &size);
+
+    bool intersectAABB(const AABB &aabb) const;
+
+    const glm::vec3 &getPosition() const;
+    const glm::vec3 &getSize() const;
+
+private:
+    glm::vec3 mPos, mSize;
+};
+
+struct RayIntersectAABBInfo {
+    glm::vec3 point;
+    float dist;
+};
+
+class Ray {
+public:
+    Ray(const glm::vec3 &origin, const glm::vec3 &dir);
+
+    RayIntersectAABBInfo intersectAABB(const AABB &aabb) const;
+
+    const glm::vec3 &getOrigin() const;
+    const glm::vec3 &getDirection() const;
+
+private:
+    glm::vec3 mOrigin, mDir;
 };
 
 }
