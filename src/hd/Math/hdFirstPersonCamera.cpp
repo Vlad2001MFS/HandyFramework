@@ -1,4 +1,4 @@
-#include "hdFirstPersonCamera.h"
+#include "hdFirstPersonCamera.hpp"
 #include "../../3rd/include/glm/ext.hpp"
 
 namespace hd {

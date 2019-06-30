@@ -434,7 +434,7 @@
     <ClInclude Include="src\hd\Graphics\hdRenderContext.hpp">
       <Filter>src\hd\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="src\hd\Math\hdFirstPersonCamera.h">
+    <ClInclude Include="src\hd\Math\hdFirstPersonCamera.hpp">
       <Filter>src\hd\Math</Filter>
     </ClInclude>
   </ItemGroup>
