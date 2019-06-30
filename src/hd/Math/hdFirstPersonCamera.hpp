@@ -21,6 +21,8 @@ public:
 
 	const glm::vec3 &getPosition() const;
     const glm::vec3 &getRotation() const;
+    glm::vec3 getDirectionLH() const;
+    glm::vec3 getDirectionRH() const;
 	glm::mat4 getViewMatrixLH() const;
 	glm::mat4 getViewMatrixRH() const;
 

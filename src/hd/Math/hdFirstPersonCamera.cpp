@@ -73,20 +73,26 @@ const glm::vec3 &FirstPersonCamera::getRotation() const {
 	return mRot;
 }
 
+glm::vec3 FirstPersonCamera::getDirectionLH() const {
+    auto rotMat = glm::eulerAngleX(mRot.x)*glm::eulerAngleY(mRot.y)*glm::eulerAngleZ(mRot.z);
+    return glm::vec3(glm::transpose(rotMat)*glm::vec4(0, 0, 1, 0));
+}
+
+glm::vec3 FirstPersonCamera::getDirectionRH() const {
+    auto rotMat = glm::eulerAngleX(mRot.x)*glm::eulerAngleY(mRot.y)*glm::eulerAngleZ(mRot.z);
+    return glm::vec3(rotMat*glm::vec4(0, 0, -1, 0));
+}
+
 glm::mat4 FirstPersonCamera::getViewMatrixLH() const {
     auto eye = mPos;
-    auto rotMat = glm::eulerAngleX(mRot.x)*glm::eulerAngleY(mRot.y)*glm::eulerAngleZ(mRot.z);
-    auto lookDir = glm::transpose(rotMat)*glm::vec4(0, 0, 1, 0);
-    auto center = eye + glm::vec3(lookDir);
+    auto center = eye + getDirectionLH();
     auto up = glm::vec3(0, 1, 0);
     return glm::lookAtLH(eye, center, up);
 }
 
 glm::mat4 FirstPersonCamera::getViewMatrixRH() const {
     auto eye = mPos;
-    auto rotMat = glm::eulerAngleX(mRot.x)*glm::eulerAngleY(mRot.y)*glm::eulerAngleZ(mRot.z);
-    auto lookDir = rotMat*glm::vec4(0, 0, -1, 0);
-    auto center = eye + glm::vec3(lookDir);
+    auto center = eye + getDirectionRH();
     auto up = glm::vec3(0, 1, 0);
     return glm::lookAtRH(eye, center, up);
 }
