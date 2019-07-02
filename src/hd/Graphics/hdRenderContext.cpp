@@ -958,9 +958,9 @@ HTexture2DArray RenderContext::createTexture2DArrayFromFiles(const std::vector<s
             HD_LOG_ERROR("Failed to create Texture2DArray from files:\n%s\nThe files has a different image sizes", hd::StringUtils::fromVector(filenames, "'", "'", "\n"));
         }
     }
-    HTexture2DArray handle = createTexture2DArray(nullptr, images.front().getWidth(), images.front().getHeight(), hd::TextureFormat::RGBA8, filenames.size());
+    HTexture2DArray handle = createTexture2DArray(nullptr, images.front().getWidth(), images.front().getHeight(), hd::TextureFormat::RGBA8, static_cast<uint32_t>(filenames.size()));
     for (size_t i = 0; i < images.size(); i++) {
-        setTexture2DArrayLayerData(handle, i, images[i].getPixels(), hd::TextureFormat::RGBA8);
+        setTexture2DArrayLayerData(handle, static_cast<uint32_t>(i), images[i].getPixels(), hd::TextureFormat::RGBA8);
     }
     return handle;
 }

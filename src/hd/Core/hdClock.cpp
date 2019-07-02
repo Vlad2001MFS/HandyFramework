@@ -98,11 +98,11 @@ Time Time::fromDays(float time) {
 }
 
 Time Clock::getTime() {
-    return Time(clock());
+    return Time(static_cast<float>(clock()));
 }
 
 Time Clock::getElapsedTime(const Time &startTime) {
-    return Time(clock()) - startTime;
+    return Time(static_cast<float>(clock())) - startTime;
 }
 
 }

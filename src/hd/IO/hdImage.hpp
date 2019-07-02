@@ -23,8 +23,8 @@ public:
     uint32_t getHeight() const { return mHeight; }
     const Color4 *getPixels() const { return mData; }
     Color4 *getPixels() { return mData; }
-    Color4 getPixel(int x, int y) const { return (x > -1 && x < mWidth && y > -1 && y < mHeight) ? mData[x + y*mWidth] : Color4::Black; }
-    void setPixel(const Color4 &color, int x, int y) { if (x > -1 && x < mWidth && y > -1 && y < mHeight) { mData[x + y*mWidth] = color; } }
+    Color4 getPixel(uint32_t x, uint32_t y) const { return (x < mWidth && y < mHeight) ? mData[x + y*mWidth] : Color4::Black; }
+    void setPixel(const Color4 &color, uint32_t x, uint32_t y) { if (x < mWidth && y < mHeight) { mData[x + y*mWidth] = color; } }
 
 private:
     Color4 *mData;

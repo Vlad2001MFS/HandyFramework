@@ -58,7 +58,7 @@ void Image::create(StreamReader &stream) {
     std::vector<uint8_t> buf(stream.getSize());
     stream.read(buf.data(), stream.getSize());
     int w, h, channels;
-    uint8_t *data = stbi_load_from_memory(buf.data(), buf.size(), &w, &h, &channels, 4);
+    uint8_t *data = stbi_load_from_memory(buf.data(), static_cast<int>(buf.size()), &w, &h, &channels, 4);
     if (!data) {
         HD_LOG_ERROR("Failed to load image from stream '%s'", stream.getName().data());
     }
