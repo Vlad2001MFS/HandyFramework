@@ -67,9 +67,10 @@ enum class TextureFormat {
 enum class SamplerFilter {
     Point,
     Linear,
-    Bilinear,
-    Trilinear,
-    Anisotropic
+    Anisotropic,
+    ComparisonPoint,
+    ComparisonLinear,
+    ComparisonAnisotropic,
 };
 
 enum class SamplerAddressMode {
@@ -224,6 +225,23 @@ struct PolygonOffset {
     float factor, units;
 };
 
+struct SamplerStateDesc {
+    SamplerStateDesc();
+
+    SamplerFilter minFilter;
+    SamplerFilter magFilter;
+    SamplerFilter mipFilter;
+    SamplerAddressMode u;
+    SamplerAddressMode v;
+    SamplerAddressMode w;
+    uint32_t maxAnisotropy;
+    float mipLodBias;
+    CompareFunc compareFunc;
+    float borderColor[4];
+    float minLod;
+    float maxLod;
+};
+
 using HVertexFormat = Handle<struct VertexFormatImpl*, struct TAG_VertexFormatImpl>;
 using HVertexBuffer = Handle<struct VertexBufferImpl*, struct TAG_VertexBufferImpl>;
 using HIndexBuffer = Handle<struct IndexBufferImpl*, struct TAG_IndexBufferImpl>;
@@ -307,14 +325,7 @@ public:
     void destroyTexture2DArray(HTexture2DArray &handle);
     void bindTexture2DArray(const HTexture2DArray &handle, uint32_t slot);
 
-    HSamplerState createSamplerState(SamplerFilter filter, uint32_t maxAnisotropy = 1);
-    HSamplerState createSamplerState(SamplerFilter filter, uint32_t maxAnisotropy, CompareFunc compareFunc, bool compareRefToTex);
-    HSamplerState createSamplerState(SamplerFilter filter, uint32_t maxAnisotropy, CompareFunc compareFunc, bool compareRefToTex, SamplerAddressMode uvw);
-    HSamplerState createSamplerState(SamplerFilter filter, uint32_t maxAnisotropy, CompareFunc compareFunc, bool compareRefToTex, SamplerAddressMode uvw,
-        float lodBias, const float *borderColor, float minLod, float maxLod);
-    HSamplerState createSamplerState(SamplerFilter filter, uint32_t maxAnisotropy, CompareFunc compareFunc, bool compareRefToTex,
-        SamplerAddressMode u, SamplerAddressMode v, SamplerAddressMode w, float lodBias, 
-        const float *borderColor, float minLod, float maxLod);
+    HSamplerState createSamplerState(const SamplerStateDesc &desc);
     void destroySamplerState(HSamplerState &handle);
     void bindSamplerState(const HSamplerState &handle, uint32_t slot);
 

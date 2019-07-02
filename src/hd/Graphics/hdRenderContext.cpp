@@ -115,22 +115,6 @@ static const GLenum gTextureDataTypes[] = {
     GL_UNSIGNED_INT_24_8,
 };
 
-static const GLenum gSamplerMinFilter[] = {
-    GL_NEAREST,
-    GL_LINEAR,
-    GL_LINEAR_MIPMAP_NEAREST,
-    GL_LINEAR_MIPMAP_LINEAR,
-    GL_LINEAR_MIPMAP_LINEAR
-};
-
-static const GLenum gSamplerMagFilter[] = {
-    GL_NEAREST,
-    GL_LINEAR,
-    GL_LINEAR,
-    GL_LINEAR,
-    GL_LINEAR
-};
-
 static const GLint gSamplerAddressModes[] = {
     GL_REPEAT,
     GL_MIRRORED_REPEAT,
@@ -220,6 +204,47 @@ const BlendModeDesc gBlendModeDescs[] = {
     BlendModeDesc(true,  BlendFactor::One         , BlendFactor::One        , BlendOp::RevSubtract, BlendFactor::One         , BlendFactor::One        , BlendOp::RevSubtract),
     BlendModeDesc(true,  BlendFactor::SrcAlpha    , BlendFactor::One        , BlendOp::RevSubtract, BlendFactor::SrcAlpha    , BlendFactor::One        , BlendOp::RevSubtract)
 };
+
+void samplerFilterToGL(SamplerFilter filter, GLenum &glFilter, bool &glIsAnisotropic, bool &glIsComparison) {
+    switch(filter) {
+        case SamplerFilter::Point: {
+            glIsAnisotropic = false;
+            glIsComparison = false;
+            glFilter = GL_NEAREST;
+            break;
+        }
+        case SamplerFilter::Linear: {
+            glIsAnisotropic = false;
+            glIsComparison = false;
+            glFilter = GL_LINEAR;
+            break;
+        }
+        case SamplerFilter::Anisotropic: {
+            glIsAnisotropic = true;
+            glIsComparison = false;
+            glFilter = GL_LINEAR;
+            break;
+        }
+        case SamplerFilter::ComparisonPoint: {
+            glIsAnisotropic = false;
+            glIsComparison = true;
+            glFilter = GL_NEAREST;
+            break;
+        }
+        case SamplerFilter::ComparisonLinear: {
+            glIsAnisotropic = false;
+            glIsComparison = true;
+            glFilter = GL_LINEAR;
+            break;
+        }
+        case SamplerFilter::ComparisonAnisotropic: {
+            glIsAnisotropic = true;
+            glIsComparison = true;
+            glFilter = GL_LINEAR;
+            break;
+        }
+    }
+}
 
 void debugCallback(uint32_t source, uint32_t type, uint32_t id, uint32_t severity, int length, const char *message, const void *userParam) {
     const char *sourceStr = nullptr, *typeStr = nullptr, *severityStr = nullptr;
@@ -427,6 +452,20 @@ bool PolygonOffset::operator!=(const PolygonOffset &rhs) const {
     return this->enabled != rhs.enabled || !MathUtils::compareFloat(this->factor, rhs.factor) || !MathUtils::compareFloat(this->units, rhs.units);
 }
 
+SamplerStateDesc::SamplerStateDesc() : borderColor{0.0f, 0.0f, 0.0f, 0.0f} {
+    this->minFilter = SamplerFilter::Linear;
+    this->magFilter = SamplerFilter::Linear;
+    this->mipFilter = SamplerFilter::Linear;
+    this->u = SamplerAddressMode::Clamp;
+    this->v = SamplerAddressMode::Clamp;
+    this->w = SamplerAddressMode::Clamp;
+    this->maxAnisotropy = 0;
+    this->mipLodBias = 0.0f;
+    this->compareFunc = CompareFunc::Never;
+    this->minLod = 0.0f;
+    this->maxLod = FLT_MAX;
+}
+
 struct VertexFormatImpl {
     uint32_t id;
     std::vector<VertexElement> elements;
@@ -462,12 +501,7 @@ struct Texture2DArrayImpl {
 
 struct SamplerStateImpl {
     uint32_t id;
-    SamplerFilter filter;
-    uint32_t maxAnisotropy;
-    CompareFunc compareFunc;
-    bool compareRefToTexture;
-    SamplerAddressMode u, v, w;
-    float lodBias, borderColor[4], minLod, maxLod;
+    SamplerStateDesc desc;
 };
 
 struct ProgramImpl {
@@ -999,60 +1033,50 @@ void RenderContext::bindTexture2DArray(const HTexture2DArray &handle, uint32_t s
     glBindTexture(GL_TEXTURE_2D_ARRAY, handle->id);
 }
 
-HSamplerState RenderContext::createSamplerState(SamplerFilter filter, uint32_t maxAnisotropy) {
-    return createSamplerState(filter, maxAnisotropy, CompareFunc::Less, false, SamplerAddressMode::Repeat, SamplerAddressMode::Repeat, SamplerAddressMode::Repeat, 0, nullptr, -1000, 1000);
-}
-
-HSamplerState RenderContext::createSamplerState(SamplerFilter filter, uint32_t maxAnisotropy, CompareFunc compareFunc, bool compareRefToTex) {
-    return createSamplerState(filter, maxAnisotropy, compareFunc, compareRefToTex, SamplerAddressMode::Repeat, SamplerAddressMode::Repeat, SamplerAddressMode::Repeat, 0, nullptr, -1000, 1000);
-}
-
-HSamplerState RenderContext::createSamplerState(SamplerFilter filter, uint32_t maxAnisotropy, CompareFunc compareFunc, bool compareRefToTex, SamplerAddressMode uvw) {
-    return createSamplerState(filter, maxAnisotropy, compareFunc, compareRefToTex, uvw, uvw, uvw, 0, nullptr, -1000, 1000);
-}
-
-HSamplerState RenderContext::createSamplerState(SamplerFilter filter, uint32_t maxAnisotropy, CompareFunc compareFunc, bool compareRefToTex, SamplerAddressMode uvw, float lodBias, const float *borderColor, float minLod, float maxLod) {
-    return createSamplerState(filter, maxAnisotropy, compareFunc, compareRefToTex, uvw, uvw, uvw, lodBias, borderColor, minLod, maxLod);
-}
-
-HSamplerState RenderContext::createSamplerState(SamplerFilter filter, uint32_t maxAnisotropy, CompareFunc compareFunc, bool compareRefToTex, SamplerAddressMode u, SamplerAddressMode v, SamplerAddressMode w, float lodBias, const float *borderColor, float minLod, float maxLod) {
+HSamplerState RenderContext::createSamplerState(const SamplerStateDesc& desc) {
     SamplerStateImpl *obj = new SamplerStateImpl();
     impl->samplerStates.push_back(HSamplerState(obj));
-    obj->filter = filter;
-    obj->maxAnisotropy = maxAnisotropy;
-    obj->compareFunc = compareFunc;
-    obj->compareRefToTexture = compareRefToTex;
-    obj->u = u;
-    obj->v = v;
-    obj->w = w;
-    obj->lodBias = lodBias;
-    if (borderColor) {
-        for (size_t i = 0; i < 4; i++) {
-            obj->borderColor[i] = borderColor[i];
-        }
+    obj->desc = desc;
+
+    bool isMinAniso = false, isMagAniso = false, isMipAniso = false;
+    bool isMinComp = false, isMagComp = false, isMipComp = false;
+    GLenum minFilter, magFilter, mipFilter;
+    samplerFilterToGL(desc.minFilter, minFilter, isMinAniso, isMinComp);
+    samplerFilterToGL(desc.magFilter, magFilter, isMagAniso, isMagComp);
+    samplerFilterToGL(desc.mipFilter, mipFilter, isMipAniso, isMipComp);
+    HD_ASSERT(isMinAniso == isMagAniso && isMagAniso == isMinAniso);
+    HD_ASSERT(isMinComp == isMagComp && isMagComp == isMipComp);
+
+    GLenum minMipFilter = 0;
+    if(minFilter == GL_NEAREST && mipFilter == GL_NEAREST) {
+        minMipFilter = GL_NEAREST_MIPMAP_NEAREST;
+    }
+    else if(minFilter == GL_LINEAR && mipFilter == GL_NEAREST) {
+        minMipFilter = GL_LINEAR_MIPMAP_NEAREST;
+    }
+    else if(minFilter == GL_NEAREST && mipFilter == GL_LINEAR) {
+        minMipFilter = GL_NEAREST_MIPMAP_LINEAR;
+    }
+    else if(minFilter == GL_LINEAR && mipFilter == GL_LINEAR) {
+        minMipFilter = GL_LINEAR_MIPMAP_LINEAR;
     }
     else {
-        for (size_t i = 0; i < 4; i++) {
-            obj->borderColor[i] = 0.0f;
-        }
+        HD_LOG_ERROR("Unsupported min/mip filter combination");
     }
-    obj->minLod = minLod;
-    obj->maxLod = maxLod;
+
     glGenSamplers(1, &obj->id);
-    glSamplerParameteri(obj->id, GL_TEXTURE_MIN_FILTER, gSamplerMinFilter[static_cast<size_t>(obj->filter)]);
-    glSamplerParameteri(obj->id, GL_TEXTURE_MAG_FILTER, gSamplerMagFilter[static_cast<size_t>(obj->filter)]);
-    if (obj->filter == SamplerFilter::Anisotropic) {
-        glSamplerParameteri(obj->id, GL_TEXTURE_MAX_ANISOTROPY_EXT, obj->maxAnisotropy);
-    }
-    glSamplerParameteri(obj->id, GL_TEXTURE_COMPARE_FUNC, gCompareFuncs[static_cast<GLenum>(obj->compareFunc)]);
-    glSamplerParameteri(obj->id, GL_TEXTURE_COMPARE_MODE, obj->compareRefToTexture ? GL_COMPARE_REF_TO_TEXTURE : GL_NONE);
-    glSamplerParameteri(obj->id, GL_TEXTURE_WRAP_S, gSamplerAddressModes[static_cast<size_t>(obj->u)]);
-    glSamplerParameteri(obj->id, GL_TEXTURE_WRAP_T, gSamplerAddressModes[static_cast<size_t>(obj->v)]);
-    glSamplerParameteri(obj->id, GL_TEXTURE_WRAP_R, gSamplerAddressModes[static_cast<size_t>(obj->w)]);
-    glSamplerParameterf(obj->id, GL_TEXTURE_LOD_BIAS, obj->lodBias);
-    glSamplerParameterfv(obj->id, GL_TEXTURE_BORDER_COLOR, obj->borderColor);
-    glSamplerParameterf(obj->id, GL_TEXTURE_MIN_LOD, obj->minLod);
-    glSamplerParameterf(obj->id, GL_TEXTURE_MAX_LOD, obj->maxLod);
+    glSamplerParameteri(obj->id, GL_TEXTURE_MIN_FILTER, minMipFilter);
+    glSamplerParameteri(obj->id, GL_TEXTURE_MAG_FILTER, magFilter);
+    glSamplerParameteri(obj->id, GL_TEXTURE_MAX_ANISOTROPY_EXT, isMipAniso ? desc.maxAnisotropy : 1);
+    glSamplerParameteri(obj->id, GL_TEXTURE_COMPARE_MODE, isMinComp ? GL_COMPARE_REF_TO_TEXTURE : GL_NONE);
+    glSamplerParameteri(obj->id, GL_TEXTURE_COMPARE_FUNC, gCompareFuncs[static_cast<GLenum>(desc.compareFunc)]);
+    glSamplerParameteri(obj->id, GL_TEXTURE_WRAP_S, gSamplerAddressModes[static_cast<size_t>(desc.u)]);
+    glSamplerParameteri(obj->id, GL_TEXTURE_WRAP_T, gSamplerAddressModes[static_cast<size_t>(desc.v)]);
+    glSamplerParameteri(obj->id, GL_TEXTURE_WRAP_R, gSamplerAddressModes[static_cast<size_t>(desc.w)]);
+    glSamplerParameterf(obj->id, GL_TEXTURE_LOD_BIAS, desc.mipLodBias);
+    glSamplerParameterfv(obj->id, GL_TEXTURE_BORDER_COLOR, desc.borderColor);
+    glSamplerParameterf(obj->id, GL_TEXTURE_MIN_LOD, desc.minLod);
+    glSamplerParameterf(obj->id, GL_TEXTURE_MAX_LOD, desc.maxLod);
     return impl->samplerStates.back();
 }
 
