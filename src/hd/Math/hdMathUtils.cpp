@@ -23,6 +23,9 @@ int MathUtils::randomInt32(int min, int max) {
     return std::rand() % max + min;
 }
 
+AABB::AABB() : mPos(0, 0, 0), mSize(0, 0, 0) {
+}
+
 AABB::AABB(const glm::vec3 &pos, const glm::vec3 &size) : mPos(pos), mSize(size) {
 }
 
@@ -43,12 +46,28 @@ bool AABB::intersectAABB(const AABB &aabb) const {
     return true;
 }
 
+void AABB::setPosition(const glm::vec3& pos) {
+    mPos = pos;
+}
+
+void AABB::setSize(const glm::vec3& size) {
+    mSize = size;
+}
+
 const glm::vec3 &AABB::getPosition() const {
     return mPos;
 }
 
 const glm::vec3 &AABB::getSize() const {
     return mSize;
+}
+
+RayIntersectAABBInfo::RayIntersectAABBInfo() : point(0, 0, 0) {
+    this->dist = INFINITY;
+    this->hasIntersection = false;
+}
+
+Ray::Ray() : mOrigin(0, 0, 0), mDir(0, 0, 0) {
 }
 
 Ray::Ray(const glm::vec3 &origin, const glm::vec3 &dir) : mOrigin(origin), mDir(dir) {
@@ -71,6 +90,14 @@ RayIntersectAABBInfo Ray::intersectAABB(const AABB &aabb) const {
     info.dist = tNear < tFar ? tNear : INFINITY;
     info.hasIntersection = tNear < tFar ? true : false;
     return info;
+}
+
+void Ray::setOrigin(const glm::vec3& origin) {
+    mOrigin = origin;
+}
+
+void Ray::setDirection(const glm::vec3& dir) {
+    mDir = dir;
 }
 
 const glm::vec3 &Ray::getOrigin() const {

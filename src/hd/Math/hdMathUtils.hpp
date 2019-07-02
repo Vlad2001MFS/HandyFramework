@@ -15,10 +15,13 @@ public:
 
 class AABB {
 public:
+    AABB();
     AABB(const glm::vec3 &pos, const glm::vec3 &size);
 
     bool intersectAABB(const AABB &aabb) const;
 
+    void setPosition(const glm::vec3 &pos);
+    void setSize(const glm::vec3 &size);
     const glm::vec3 &getPosition() const;
     const glm::vec3 &getSize() const;
 
@@ -27,6 +30,8 @@ private:
 };
 
 struct RayIntersectAABBInfo {
+    RayIntersectAABBInfo();
+
     glm::vec3 point;
     float dist;
     bool hasIntersection;
@@ -34,10 +39,13 @@ struct RayIntersectAABBInfo {
 
 class Ray {
 public:
+    Ray();
     Ray(const glm::vec3 &origin, const glm::vec3 &dir);
 
     RayIntersectAABBInfo intersectAABB(const AABB &aabb) const;
 
+    void setOrigin(const glm::vec3 &origin);
+    void setDirection(const glm::vec3 &dir);
     const glm::vec3 &getOrigin() const;
     const glm::vec3 &getDirection() const;
 
