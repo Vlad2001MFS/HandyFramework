@@ -29,6 +29,7 @@ private:
 struct RayIntersectAABBInfo {
     glm::vec3 point;
     float dist;
+    bool hasIntersection;
 };
 
 class Ray {

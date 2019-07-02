@@ -69,6 +69,7 @@ RayIntersectAABBInfo Ray::intersectAABB(const AABB &aabb) const {
     RayIntersectAABBInfo info;
     info.point = tNear > 0 ? point1 : point2;
     info.dist = tNear < tFar ? tNear : INFINITY;
+    info.hasIntersection = tNear < tFar ? true : false;
     return info;
 }
 
