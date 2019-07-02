@@ -25,7 +25,7 @@ void StringStream::close() {
 }
 
 char StringStream::read(const std::string &symbolsToSkip) {
-    auto ch = look(0, symbolsToSkip);
+    char ch = look(0, symbolsToSkip);
     mPos++;
     return ch;
 }

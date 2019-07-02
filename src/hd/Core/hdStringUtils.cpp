@@ -9,7 +9,7 @@ namespace hd {
 size_t _vscprintf (const char *format, va_list pargs) {
     va_list argcopy;
     va_copy(argcopy, pargs);
-    auto ret = vsnprintf(nullptr, 0, format, argcopy);
+    int ret = vsnprintf(nullptr, 0, format, argcopy);
     va_end(argcopy);
     return static_cast<size_t>(ret);
 }
@@ -19,7 +19,7 @@ std::string StringUtils::format(const char * fmt, ...) {
     HD_ASSERT(fmt);
     va_list args;
     va_start(args, fmt);
-    auto buf = std::string(_vscprintf(fmt, args), '\0');
+    std::string buf(_vscprintf(fmt, args), '\0');
     vsprintf(buf.data(), fmt, args);
     va_end(args);
     return buf;
@@ -27,7 +27,7 @@ std::string StringUtils::format(const char * fmt, ...) {
 
 std::string StringUtils::formatArgs(const char * fmt, va_list args) {
     HD_ASSERT(fmt);
-    auto buf = std::string(_vscprintf(fmt, args), '\0');
+    std::string buf(_vscprintf(fmt, args), '\0');
     vsprintf(buf.data(), fmt, args);
     return buf.data();
 }
@@ -36,7 +36,7 @@ int StringUtils::scan(const std::string &str, const char * fmt, ...) {
     HD_ASSERT(fmt);
     va_list ap;
     va_start(ap, fmt);
-    auto ret = vsscanf(str.data(), fmt, ap);
+    int ret = vsscanf(str.data(), fmt, ap);
     va_end(ap);
     return ret;
 }
@@ -105,19 +105,19 @@ std::string StringUtils::afterLast(const std::string &str, const std::string &se
 }
 
 std::string StringUtils::subStr(const std::string &str, char leftSeparator, char rightSeparator) {
-    auto offset = str.find(leftSeparator) + 1;
-    auto count = str.rfind(rightSeparator) - offset;
+    size_t offset = str.find(leftSeparator) + 1;
+    size_t count = str.rfind(rightSeparator) - offset;
     return str.substr(offset, count);
 }
 
 std::string StringUtils::subStr(const std::string &str, const std::string &leftSeparator, const std::string &rightSeparator) {
-    auto offset = str.find(leftSeparator) + leftSeparator.size();
-    auto count = str.rfind(rightSeparator) - offset;
+    size_t offset = str.find(leftSeparator) + leftSeparator.size();
+    size_t count = str.rfind(rightSeparator) - offset;
     return str.substr(offset, count);
 }
 
 std::string StringUtils::removeSymbols(const std::string &str, const std::string &symbols, bool caseSensitive) {
-    auto result = str;
+    std::string result = str;
     for (const auto &ch : symbols) {
         if (caseSensitive) {
             result.erase(std::remove(result.begin(), result.end(), ch), result.end());
@@ -131,8 +131,8 @@ std::string StringUtils::removeSymbols(const std::string &str, const std::string
 }
 
 size_t StringUtils::symbolsCount(const std::string &str, const std::string &symbols, bool caseSensitive) {
-    auto s1 = caseSensitive ? str : lower(str);
-    auto s2 = caseSensitive ? symbols : lower(symbols);
+    std::string s1 = caseSensitive ? str : lower(str);
+    std::string s2 = caseSensitive ? symbols : lower(symbols);
     size_t count = 0;
     for (const auto &ch : s2) {
         count += symbolsCount(s1, ch, true);
@@ -141,8 +141,8 @@ size_t StringUtils::symbolsCount(const std::string &str, const std::string &symb
 }
 
 size_t StringUtils::symbolsCount(const std::string &str, char symbol, bool caseSensitive) {
-    auto s1 = caseSensitive ? str : lower(str);
-    auto s2 = caseSensitive ? symbol : lower(symbol);
+    std::string s1 = caseSensitive ? str : lower(str);
+    char s2 = caseSensitive ? symbol : lower(symbol);
     size_t count = 0;
     for (const auto &ch : s1) {
         if (ch == s2) {
@@ -160,8 +160,8 @@ bool StringUtils::contains(const std::string & str, const std::string & findStr,
 }
 
 bool StringUtils::containsSymbol(const std::string &str, char symbol, bool caseSensitive) {
-    auto s1 = caseSensitive ? str : lower(str);
-    auto ch = caseSensitive ? symbol : lower(symbol);
+    std::string s1 = caseSensitive ? str : lower(str);
+    char ch = caseSensitive ? symbol : lower(symbol);
     for (const auto &it : s1) {
         if (it == ch) {
             return true;
@@ -171,8 +171,8 @@ bool StringUtils::containsSymbol(const std::string &str, char symbol, bool caseS
 }
 
 bool StringUtils::containsSymbol(const std::string &str, const std::string &symbolsList, bool caseSensitive) {
-    auto s1 = caseSensitive ? str : lower(str);
-    auto s2 = caseSensitive ? symbolsList : lower(symbolsList);
+    std::string s1 = caseSensitive ? str : lower(str);
+    std::string s2 = caseSensitive ? symbolsList : lower(symbolsList);
     for (const auto &ch : s2) {
         if (containsSymbol(s1, ch, true)) {
             return true;
@@ -198,8 +198,8 @@ bool StringUtils::startsWith(const std::string &str, const std::string &substr, 
     if (str.size() < substr.size()) {
         return false;
     }
-    auto s1 = caseSensetive ? str : lower(str);
-    auto s2 = caseSensetive ? substr : lower(substr);
+    std::string s1 = caseSensetive ? str : lower(str);
+    std::string s2 = caseSensetive ? substr : lower(substr);
     for (size_t i = 0; i < s2.size(); i++) {
         if (s1[i] != s2[i]) {
             return false;
@@ -212,8 +212,8 @@ bool StringUtils::endsWith(const std::string &str, const std::string &substr, bo
     if (str.size() < substr.size()) {
         return false;
     }
-    auto s1 = caseSensetive ? str : lower(str);
-    auto s2 = caseSensetive ? substr : lower(substr);
+    std::string s1 = caseSensetive ? str : lower(str);
+    std::string s2 = caseSensetive ? substr : lower(substr);
     for (size_t i = 0; i < substr.size(); i++) {
         if (s1[s1.size() - 1 - i] != s2[s2.size() - 1 - i]) {
             return false;
@@ -270,21 +270,19 @@ bool StringUtils::isAlphaDigit(const std::string &str) {
 }
 
 std::wstring StringUtils::toWideString(const std::string & str) {
-    auto len = str.length() + 1;
-    auto buf = std::wstring(len, '\0');
+    size_t len = str.length() + 1;
+    std::wstring buf(len, '\0');
     mbstowcs(buf.data(), str.data(), len);
     return buf;
 }
 
 std::string StringUtils::fromWideString(const std::wstring& str) {
-    using convert_typeX = std::codecvt_utf8<wchar_t>;
-    std::wstring_convert<convert_typeX, wchar_t> converterX;
-    return converterX.to_bytes(str);
+    return std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t>().to_bytes(str);
 }
 
 std::string StringUtils::utf8ToCp1251(const std::string &utf8str) {
     std::wstring_convert<std::codecvt_utf8<wchar_t>> wconv;
-    auto wstr = wconv.from_bytes(utf8str);
+    std::wstring wstr = wconv.from_bytes(utf8str);
     std::vector<char> buf(wstr.size());
     std::use_facet<std::ctype<wchar_t>>(std::locale(".1251")).narrow(wstr.data(), wstr.data() + wstr.size(), '?', buf.data());
     return std::string(buf.data(), buf.size());

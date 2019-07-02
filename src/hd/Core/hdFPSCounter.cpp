@@ -9,7 +9,7 @@ FPSCounter::FPSCounter() : mTimer(Clock::getTime()) {
 }
 
 bool FPSCounter::update() {
-    auto elapsedTime = Clock::getElapsedTime(mTimer);
+    Time elapsedTime = Clock::getElapsedTime(mTimer);
     if (elapsedTime >= Time::fromMilliseconds(1000)) {
         mFps = mTempFps;
         mTempFps = 1;

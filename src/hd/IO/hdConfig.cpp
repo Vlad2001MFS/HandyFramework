@@ -34,7 +34,7 @@ public:
     ~Lexer() {}
 
     std::vector<Token> parse(const std::string &text) {
-        auto lexems = hd::StringUtils::split(hd::StringUtils::removeSymbols(text, mIgnoreSymbols, false), mSingleSymbols + mSeparators, true);
+        std::vector<std::string> lexems = hd::StringUtils::split(hd::StringUtils::removeSymbols(text, mIgnoreSymbols, false), mSingleSymbols + mSeparators, true);
         lexems.erase(std::remove_if(lexems.begin(), lexems.end(), [](const std::string &str) {
             return str.empty() || str == " " || str == "\t";
         }), lexems.end());
@@ -106,7 +106,7 @@ public:
         mIt = mTokens.begin();
         root = ConfigValue(ConfigValueType::Table);
         root.mName = mName;
-        auto token = mRead();
+        const Token &token = mRead();
         if (token.type == TokenType::BraceOpen) {
             mParseTable(root);
         }
@@ -124,7 +124,7 @@ private:
     }
 
     const Token &mRead() {
-        const auto &token = *mIt;
+        const Token &token = *mIt;
         mIt++;
         return token;
     }
@@ -149,7 +149,7 @@ private:
     }
 
     void mParseSlot(ConfigValue &root) {
-        auto id = mRead();
+        const Token &id = mRead();
         mMatch(TokenType::Equal);
         ConfigValue value;
         mParseValue(value);
@@ -157,7 +157,7 @@ private:
     }
 
     void mParseValue(ConfigValue &root) {
-        auto value = mRead();
+        const Token &value = mRead();
         if (value.type == TokenType::Null) {
             root = ConfigValue();
             root.mName = mName;
@@ -404,12 +404,12 @@ Config::~Config() {
 
 void Config::create(StreamReader &stream) {
     mName = stream.getName();
-    auto size = stream.getSize();
-    auto text = std::string(size, 0);
+    uint32_t size = stream.getSize();
+    std::string text(size, '\0');
     stream.read(text.data(), size);
 
     Lexer lexer;
-    auto tokens = lexer.parse(text);
+    std::vector<Token> tokens = lexer.parse(text);
     Parser parser(mName);
     parser.parse(tokens, *this);
 }

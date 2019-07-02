@@ -36,7 +36,7 @@ void Serializer::destroy() {
 
 void Serializer::writeString(const std::string &value) {
     uint64_t strLen = value.length();
-    auto strData = value.data();
+    const char *strData = value.data();
     mStream->write(strLen);
     mStream->write(strData, sizeof(char)*strLen);
 }

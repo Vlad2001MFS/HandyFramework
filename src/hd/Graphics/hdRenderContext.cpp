@@ -507,7 +507,7 @@ void RenderContext::create(const Window &window) {
 
     impl->settings = window.getOpenGLContextSettings();
     glewExperimental = true;
-    auto error = glewInit();
+    GLenum error = glewInit();
     if (error != GLEW_OK) {
         HD_LOG_ERROR("Failed to initialize GLEW. Errors: %s", glewGetErrorString(error));
     }
@@ -680,7 +680,7 @@ void RenderContext::setViewport(const glm::ivec2 &pos, const glm::ivec2 &size) {
 
 HVertexFormat RenderContext::createVertexFormat(const std::vector<VertexElement> &desc) {
     HD_ASSERT(!desc.empty());
-    auto obj = new VertexFormatImpl();
+    VertexFormatImpl *obj = new VertexFormatImpl();
     impl->vertexFormats.push_back(HVertexFormat(obj));
     obj->elements = desc;
     glGenVertexArrays(1, &obj->id);
@@ -710,7 +710,7 @@ void RenderContext::bindVertexFormat(const HVertexFormat &handle) {
 
 HVertexBuffer RenderContext::createVertexBuffer(const void *data, uint32_t size, BufferUsage usage) {
     HD_ASSERT(size != 0);
-    auto obj = new VertexBufferImpl();
+    VertexBufferImpl *obj = new VertexBufferImpl();
     impl->vertexBuffers.push_back(HVertexBuffer(obj));
     obj->size = size;
     obj->usage = usage;
@@ -771,7 +771,7 @@ void RenderContext::bindVertexBuffer(const HVertexBuffer &handle, uint32_t slot,
 
 HIndexBuffer RenderContext::createIndexBuffer(const void *data, uint32_t size, BufferUsage usage) {
     HD_ASSERT(size != 0);
-    auto obj = new IndexBufferImpl();
+    IndexBufferImpl *obj = new IndexBufferImpl();
     impl->indexBuffers.push_back(HIndexBuffer(obj));
     obj->size = size;
     obj->usage = usage;
@@ -830,7 +830,7 @@ void RenderContext::bindIndexBuffer(const HIndexBuffer &handle) {
 
 HConstantBuffer RenderContext::createConstantBuffer(const void *data, uint32_t size, BufferUsage usage) {
     HD_ASSERT(size != 0);
-    auto obj = new ConstantBufferImpl();
+    ConstantBufferImpl *obj = new ConstantBufferImpl();
     impl->constantBuffers.push_back(HConstantBuffer(obj));
     obj->size = size;
     obj->usage = usage;
@@ -890,7 +890,7 @@ void RenderContext::bindConstantBuffer(const HConstantBuffer &handle, uint32_t s
 
 HTexture2D RenderContext::createTexture2D(const void *data, uint32_t w, uint32_t h, TextureFormat format) {
     HD_ASSERT(w != 0 && h != 0);
-    auto obj = new Texture2DImpl();
+    Texture2DImpl *obj = new Texture2DImpl();
     impl->textures2D.push_back(HTexture2D(obj));
     obj->format = format;
     obj->size = glm::ivec2(w, h);
@@ -906,12 +906,12 @@ HTexture2D RenderContext::createTexture2D(const void *data, const glm::ivec2 &si
 }
 
 HTexture2D RenderContext::createTexture2DFromStream(StreamReader &stream) {
-    auto img = Image(stream);
+    Image img(stream);
     return createTexture2D(static_cast<const void*>(img.getPixels()), img.getWidth(), img.getHeight(), TextureFormat::RGBA8);
 }
 
 HTexture2D RenderContext::createTexture2DFromFile(const std::string &filename) {
-    auto fs = FileReader(filename);
+    FileReader fs(filename);
     fs.setName(filename);
     return createTexture2DFromStream(fs);
 }
@@ -934,7 +934,7 @@ void RenderContext::bindTexture2D(const HTexture2D &handle, uint32_t slot) {
 
 HTexture2DArray RenderContext::createTexture2DArray(const void *data, uint32_t w, uint32_t h, TextureFormat format, uint32_t layers) {
     HD_ASSERT(w != 0 && h != 0);
-    auto obj = new Texture2DArrayImpl();
+    Texture2DArrayImpl *obj = new Texture2DArrayImpl();
     impl->texture2DArrays.push_back(HTexture2DArray(obj));
     obj->format = format;
     obj->size = glm::ivec2(w, h);
@@ -952,13 +952,13 @@ HTexture2DArray RenderContext::createTexture2DArrayFromFiles(const std::vector<s
     HD_ASSERT(!filenames.empty());
     std::vector<hd::Image> images;
     images.reserve(filenames.size());
-    for (const auto filename : filenames) {
+    for (const auto &filename : filenames) {
         images.emplace_back(filename);
         if (images.size() > 1 && images[0].getWidth() != images[1].getWidth() && images[0].getHeight() != images[1].getHeight()) {
             HD_LOG_ERROR("Failed to create Texture2DArray from files:\n%s\nThe files has a different image sizes", hd::StringUtils::fromVector(filenames, "'", "'", "\n"));
         }
     }
-    auto handle = createTexture2DArray(nullptr, images.front().getWidth(), images.front().getHeight(), hd::TextureFormat::RGBA8, filenames.size());
+    HTexture2DArray handle = createTexture2DArray(nullptr, images.front().getWidth(), images.front().getHeight(), hd::TextureFormat::RGBA8, filenames.size());
     for (size_t i = 0; i < images.size(); i++) {
         setTexture2DArrayLayerData(handle, i, images[i].getPixels(), hd::TextureFormat::RGBA8);
     }
@@ -973,12 +973,12 @@ void RenderContext::setTexture2DArrayLayerData(const HTexture2DArray &handle, ui
 }
 
 void RenderContext::setTexture2DArrayLayerData(const HTexture2DArray &handle, uint32_t layer, StreamReader &stream) {
-    auto img = Image(stream);
+    Image img(stream);
     setTexture2DArrayLayerData(handle, layer, img.getPixels(), TextureFormat::RGBA8);
 }
 
 void RenderContext::setTexture2DArrayLayerData(const HTexture2DArray &handle, uint32_t layer, const std::string &filename) {
-    auto fs = FileReader(filename);
+    FileReader fs(filename);
     fs.setName(filename);
     setTexture2DArrayLayerData(handle, layer, fs);
 }
@@ -1016,7 +1016,7 @@ HSamplerState RenderContext::createSamplerState(SamplerFilter filter, uint32_t m
 }
 
 HSamplerState RenderContext::createSamplerState(SamplerFilter filter, uint32_t maxAnisotropy, CompareFunc compareFunc, bool compareRefToTex, SamplerAddressMode u, SamplerAddressMode v, SamplerAddressMode w, float lodBias, const float *borderColor, float minLod, float maxLod) {
-    auto obj = new SamplerStateImpl();
+    SamplerStateImpl *obj = new SamplerStateImpl();
     impl->samplerStates.push_back(HSamplerState(obj));
     obj->filter = filter;
     obj->maxAnisotropy = maxAnisotropy;
@@ -1074,7 +1074,7 @@ void RenderContext::bindSamplerState(const HSamplerState &handle, uint32_t slot)
 HProgram RenderContext::createProgram(const std::string &name, const std::string &vsCode, const std::string &psCode, const std::string &defines) {
     HD_ASSERT(!vsCode.empty());
     HD_ASSERT(!psCode.empty());
-    auto obj = new ProgramImpl();
+    ProgramImpl *obj = new ProgramImpl();
     impl->programs.push_back(HProgram(obj));
     obj->name = name;
     obj->vsCode = vsCode;
@@ -1082,15 +1082,15 @@ HProgram RenderContext::createProgram(const std::string &name, const std::string
     obj->defines = defines;
     obj->id = glCreateProgram();
 
-    auto result = 0, logLength = 0;
-    auto version = impl->settings.majorVersion*100 + impl->settings.minorVersion*10;
+    int result = 0, logLength = 0;
+    uint32_t version = impl->settings.majorVersion*100 + impl->settings.minorVersion*10;
     if (version < 300) {
         version -= 90;
     }
     else if (version < 330) {
         version -= 170;
     }
-    auto versionStr = StringUtils::format("#version %d%s\n", version, impl->settings.isCoreProfile ? " core" : "");
+    std::string versionStr = StringUtils::format("#version %d%s\n", version, impl->settings.isCoreProfile ? " core" : "");
     std::string definesStr;
     if (!defines.empty()) {
         for (const auto &it : StringUtils::split(defines, ";", false)) {
@@ -1098,10 +1098,10 @@ HProgram RenderContext::createProgram(const std::string &name, const std::string
         }
     }
 
-    auto vsSource = versionStr + definesStr + "#line 1\n" + vsCode;
-    auto psSource = versionStr + definesStr + "#line 1\n" + psCode;
+    std::string vsSource = versionStr + definesStr + "#line 1\n" + vsCode;
+    std::string psSource = versionStr + definesStr + "#line 1\n" + psCode;
 
-    auto vs = glCreateShader(GL_VERTEX_SHADER);
+    uint32_t vs = glCreateShader(GL_VERTEX_SHADER);
     const char *vsSources[] = { vsSource.data() };
     int vsSourcesLengths[] = { static_cast<int>(vsSource.length()) };
     glShaderSource(vs, HD_ARRAYSIZE(vsSourcesLengths), vsSources, vsSourcesLengths);
@@ -1109,12 +1109,12 @@ HProgram RenderContext::createProgram(const std::string &name, const std::string
     glGetShaderiv(vs, GL_COMPILE_STATUS, &result);
     if (!result) {
         glGetShaderiv(vs, GL_INFO_LOG_LENGTH, &logLength);
-        auto errorStr = std::vector<char>(static_cast<size_t>(logLength));
+        std::vector<char> errorStr(static_cast<size_t>(logLength));
         glGetShaderInfoLog(vs, logLength, nullptr, errorStr.data());
         HD_LOG_ERROR("Failed to compile vertex shader for program '%s'. Errors:\n%s", name.data(), errorStr.data());
     }
 
-    auto ps = glCreateShader(GL_FRAGMENT_SHADER);
+    uint32_t ps = glCreateShader(GL_FRAGMENT_SHADER);
     const char *psSources[] = { psSource.data() };
     int psSourcesLengths[] = { static_cast<int>(psSource.length()) };
     glShaderSource(ps, HD_ARRAYSIZE(psSourcesLengths), psSources, psSourcesLengths);
@@ -1122,7 +1122,7 @@ HProgram RenderContext::createProgram(const std::string &name, const std::string
     glGetShaderiv(ps, GL_COMPILE_STATUS, &result);
     if (!result) {
         glGetShaderiv(ps, GL_INFO_LOG_LENGTH, &logLength);
-        auto errorStr = std::vector<char>(static_cast<size_t>(logLength));
+        std::vector<char> errorStr(static_cast<size_t>(logLength));
         glGetShaderInfoLog(ps, logLength, nullptr, errorStr.data());
         HD_LOG_ERROR("Failed to compile pixel shader for program '%s'. Errors:\n%s", name.data(), errorStr.data());
     }
@@ -1133,7 +1133,7 @@ HProgram RenderContext::createProgram(const std::string &name, const std::string
     glGetProgramiv(obj->id, GL_LINK_STATUS, &result);
     if (!result) {
         glGetProgramiv(obj->id, GL_INFO_LOG_LENGTH, &logLength);
-        auto errorStr = std::vector<char>(static_cast<size_t>(logLength));
+        std::vector<char> errorStr(static_cast<size_t>(logLength));
         glGetProgramInfoLog(obj->id, logLength, nullptr, errorStr.data());
         HD_LOG_ERROR("Failed to link program '%s'. Errors:\n%s", name.data(), errorStr.data());
     }
@@ -1142,7 +1142,7 @@ HProgram RenderContext::createProgram(const std::string &name, const std::string
     glGetProgramiv(obj->id, GL_VALIDATE_STATUS, &result);
     if (!result) {
         glGetProgramiv(obj->id, GL_INFO_LOG_LENGTH, &logLength);
-        auto errorStr = std::vector<char>(static_cast<size_t>(logLength));
+        std::vector<char> errorStr(static_cast<size_t>(logLength));
         glGetProgramInfoLog(obj->id, logLength, nullptr, errorStr.data());
         HD_LOG_ERROR("Failed to link program '%s'. Errors:\n%s", name.data(), errorStr.data());
     }
@@ -1155,9 +1155,9 @@ HProgram RenderContext::createProgram(const std::string &name, const std::string
 }
 
 HProgram RenderContext::createProgramFromStream(StreamReader &stream, const std::string &defines) {
-    auto text = stream.readAllLines();
+    std::vector<std::string> text = stream.readAllLines();
     std::string code[2];
-    auto shaderType = 0; // 0 - vs, 1 - ps;
+    int shaderType = 0; // 0 - vs, 1 - ps;
     for (const auto &it : text) {
         if (StringUtils::contains(it, "@VertexShader", false)) {
             shaderType = 0;
@@ -1173,7 +1173,7 @@ HProgram RenderContext::createProgramFromStream(StreamReader &stream, const std:
 }
 
 HProgram RenderContext::createProgramFromFile(const std::string &filename, const std::string &defines) {
-    auto fs = FileReader(filename);
+    FileReader fs(filename);
     fs.setName(filename);
     return createProgramFromStream(fs, defines);
 }

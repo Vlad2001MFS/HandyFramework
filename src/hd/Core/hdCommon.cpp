@@ -22,7 +22,7 @@ void debugLog(const char *prefix, const char *fmt, ...) {
     fprintf(stdout, prefix);
     vfprintf(stdout, fmt, args);
     fprintf(stdout, "\n");
-    auto f = fopen(gLogFilename, "a");
+    FILE *f = fopen(gLogFilename, "a");
     fprintf(f, prefix);
     vfprintf(f, fmt, args);
     fprintf(f, "\n");

@@ -20,8 +20,8 @@ void FirstPersonCamera::translate(float x, float y, float z) {
 }
 
 void FirstPersonCamera::translate(const glm::vec3 &offset) {
-    auto rotMat = glm::eulerAngleX(mRot.x)*glm::eulerAngleY(mRot.y)*glm::eulerAngleZ(mRot.z);
-    auto move = glm::transpose(rotMat)*glm::vec4(offset, 1.0f);
+    glm::mat4 rotMat = glm::eulerAngleX(mRot.x)*glm::eulerAngleY(mRot.y)*glm::eulerAngleZ(mRot.z);
+    glm::vec4 move = glm::transpose(rotMat)*glm::vec4(offset, 1.0f);
     setPosition(mPos + glm::vec3(move));
 }
 
@@ -46,14 +46,14 @@ void FirstPersonCamera::setPosition(const glm::vec3 & pos) {
 void FirstPersonCamera::setRotation(float x, float y, float z) {
     mRot.x = glm::clamp(x, mMinVertical, mMaxVertical);
     if (glm::abs(y) > glm::two_pi<float>()) {
-        auto sign = y / glm::abs(y);
+        float sign = y / glm::abs(y);
         mRot.y = (glm::abs(y) - glm::two_pi<float>())*sign;
     }
     else {
         mRot.y = y;
     }
     if (glm::abs(z) > glm::two_pi<float>()) {
-        auto sign = z / glm::abs(z);
+        float sign = z / glm::abs(z);
         mRot.z = (glm::abs(z) - glm::two_pi<float>())*sign;
     }
     else {
@@ -74,26 +74,26 @@ const glm::vec3 &FirstPersonCamera::getRotation() const {
 }
 
 glm::vec3 FirstPersonCamera::getDirectionLH() const {
-    auto rotMat = glm::eulerAngleX(mRot.x)*glm::eulerAngleY(mRot.y)*glm::eulerAngleZ(mRot.z);
+    glm::mat4 rotMat = glm::eulerAngleX(mRot.x)*glm::eulerAngleY(mRot.y)*glm::eulerAngleZ(mRot.z);
     return glm::vec3(glm::transpose(rotMat)*glm::vec4(0, 0, 1, 0));
 }
 
 glm::vec3 FirstPersonCamera::getDirectionRH() const {
-    auto rotMat = glm::eulerAngleX(mRot.x)*glm::eulerAngleY(mRot.y)*glm::eulerAngleZ(mRot.z);
+    glm::mat4 rotMat = glm::eulerAngleX(mRot.x)*glm::eulerAngleY(mRot.y)*glm::eulerAngleZ(mRot.z);
     return glm::vec3(rotMat*glm::vec4(0, 0, -1, 0));
 }
 
 glm::mat4 FirstPersonCamera::getViewMatrixLH() const {
-    auto eye = mPos;
-    auto center = eye + getDirectionLH();
-    auto up = glm::vec3(0, 1, 0);
+    glm::vec3 eye = mPos;
+    glm::vec3 center = eye + getDirectionLH();
+    glm::vec3 up = glm::vec3(0, 1, 0);
     return glm::lookAtLH(eye, center, up);
 }
 
 glm::mat4 FirstPersonCamera::getViewMatrixRH() const {
-    auto eye = mPos;
-    auto center = eye + getDirectionRH();
-    auto up = glm::vec3(0, 1, 0);
+    glm::vec3 eye = mPos;
+    glm::vec3 center = eye + getDirectionRH();
+    glm::vec3 up = glm::vec3(0, 1, 0);
     return glm::lookAtRH(eye, center, up);
 }
 

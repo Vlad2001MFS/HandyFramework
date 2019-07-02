@@ -28,8 +28,8 @@ std::vector<std::string> StreamReader::readAllLines() {
 }
 
 std::string StreamReader::readAllText() {
-    auto size = getSize();
-    auto data = std::string(size, '\0');
+    uint32_t size = getSize();
+    std::string data(size, '\0');
     if (read(data.data(), size) != size) {
         HD_LOG_ERROR("Failed to read all text from stream '%s'", getName().data());
     }

@@ -66,7 +66,7 @@ struct Window::Impl {
     bool isFocused = true;
 
     void createWindow(const std::string &title, uint32_t w, uint32_t h, WindowFlags flags, bool forOpenGL) {
-        auto sdlFlags = SDL_WINDOW_SHOWN | getSDLWindowFlagsFromWindowFlags(flags);
+        uint32_t sdlFlags = SDL_WINDOW_SHOWN | getSDLWindowFlagsFromWindowFlags(flags);
         if (forOpenGL) {
             sdlFlags |= SDL_WINDOW_OPENGL;
         }

@@ -32,11 +32,11 @@ bool FileReader::setPosition(int offset, StreamOrigin origin) {
 
 uint32_t FileReader::getPosition() const {
 	HD_ASSERT(mHandle);
-    auto pos = ftell(mHandle);
+    uint32_t pos = ftell(mHandle);
     if (pos < 0) {
         HD_LOG_ERROR("Failed to get position of stream '%s'", getName().data());
     }
-    return static_cast<uint32_t>(pos);
+    return pos;
 }
 
 size_t FileReader::read(void *data, size_t size) {
@@ -45,9 +45,9 @@ size_t FileReader::read(void *data, size_t size) {
 }
 
 uint32_t FileReader::getSize() const {
-    auto curPos = getPosition();
+    uint32_t curPos = getPosition();
     fseek(mHandle, 0, SEEK_END);
-    auto size = getPosition();
+    uint32_t size = getPosition();
     fseek(mHandle, static_cast<int>(curPos), SEEK_SET);
     return size;
 }
@@ -94,11 +94,11 @@ bool FileWriter::setPosition(int offset, StreamOrigin origin) {
 
 uint32_t FileWriter::getPosition() const {
     HD_ASSERT(mHandle);
-    auto pos = ftell(mHandle);
+    uint32_t pos = ftell(mHandle);
     if (pos < 0) {
         HD_LOG_ERROR("Failed to get position of stream '%s'", getName().data());
     }
-    return static_cast<uint32_t>(pos);
+    return pos;
 }
 
 size_t FileWriter::write(const void *data, size_t size) {
@@ -107,9 +107,9 @@ size_t FileWriter::write(const void *data, size_t size) {
 }
 
 uint32_t FileWriter::getSize() const {
-    auto curPos = getPosition();
+    uint32_t curPos = getPosition();
     fseek(mHandle, 0, SEEK_END);
-    auto size = getPosition();
+    uint32_t size = getPosition();
     fseek(mHandle, static_cast<int>(curPos), SEEK_SET);
     return size;
 }
