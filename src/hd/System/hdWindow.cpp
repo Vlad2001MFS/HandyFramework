@@ -154,6 +154,9 @@ void Window::create(const std::string &title, uint32_t w, uint32_t h, WindowFlag
     if (contextSettings.isCoreProfile) {
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     }
+    else {
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+    }
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, static_cast<int>(contextSettings.depthBits));
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, static_cast<int>(contextSettings.stencilBits));
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, contextSettings.msaaSamples > 0);
