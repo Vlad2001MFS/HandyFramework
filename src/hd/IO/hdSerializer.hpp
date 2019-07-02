@@ -14,6 +14,7 @@ public:
     void create(const std::string &filename);
     void destroy();
 
+    void writeBuffer(const void *data, size_t size);
     void writeString(const std::string &value);
 
     template<typename T>

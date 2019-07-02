@@ -14,6 +14,7 @@ public:
     void create(const std::string &filename);
     void destroy();
 
+    void readBuffer(void *data, size_t size);
     void readString(std::string &value);
     std::string readString();
 

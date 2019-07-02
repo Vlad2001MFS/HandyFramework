@@ -34,6 +34,12 @@ void Deserializer::destroy() {
 	mStream = nullptr;
 }
 
+void Deserializer::readBuffer(void *data, size_t size) {
+    HD_ASSERT(data);
+    HD_ASSERT(size);
+    HD_ASSERT(mStream->read(data, size) == size);
+}
+
 void Deserializer::readString(std::string &value) {
     uint64_t strLen;
     mStream->read(strLen);

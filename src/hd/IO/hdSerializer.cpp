@@ -34,6 +34,12 @@ void Serializer::destroy() {
     mStream = nullptr;
 }
 
+void Serializer::writeBuffer(const void *data, size_t size) {
+    HD_ASSERT(data);
+    HD_ASSERT(size);
+    HD_ASSERT(mStream->write(data, size) == size);
+}
+
 void Serializer::writeString(const std::string &value) {
     uint64_t strLen = value.length();
     const char *strData = value.data();
