@@ -105,7 +105,7 @@ OpenGLContextSettings::OpenGLContextSettings() {
     this->depthBits = 24;
     this->stencilBits = 0;
     this->msaaSamples = 1;
-    this->isCoreProfile = true;
+    this->isCoreProfile = false;
 #ifdef HD_BUILDMODE_DEBUG
     this->isDebug = true;
 #else
