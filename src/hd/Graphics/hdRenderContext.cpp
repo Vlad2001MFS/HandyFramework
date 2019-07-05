@@ -779,7 +779,7 @@ void RenderContext::updateVertexBufferData(HVertexBuffer &handle, const void *da
 void RenderContext::updateVertexBufferData(HVertexBuffer &handle, const void *data, uint32_t offset, uint32_t size) {
     HD_ASSERT(handle);
     HD_ASSERT(size != 0);
-    HD_ASSERT((offset + size) < handle->size);
+    HD_ASSERT((offset + size) <= handle->size);
     glBindBuffer(GL_ARRAY_BUFFER, handle->id);
     glBufferSubData(GL_ARRAY_BUFFER, offset, size, data);
 }
@@ -840,7 +840,7 @@ void RenderContext::updateIndexBufferData(HIndexBuffer &handle, const void *data
 void RenderContext::updateIndexBufferData(HIndexBuffer &handle, const void *data, uint32_t offset, uint32_t size) {
     HD_ASSERT(handle);
     HD_ASSERT(size != 0);
-    HD_ASSERT((offset + size) < handle->size);
+    HD_ASSERT((offset + size) <= handle->size);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, handle->id);
     glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, size, data);
 }
@@ -899,7 +899,7 @@ void RenderContext::updateConstantBufferData(HConstantBuffer &handle, const void
 void RenderContext::updateConstantBufferData(HConstantBuffer &handle, const void *data, uint32_t offset, uint32_t size) {
     HD_ASSERT(handle);
     HD_ASSERT(size != 0);
-    HD_ASSERT((offset + size) < handle->size);
+    HD_ASSERT((offset + size) <= handle->size);
     glBindBuffer(GL_UNIFORM_BUFFER, handle->id);
     glBufferSubData(GL_UNIFORM_BUFFER, offset, size, data);
 }
