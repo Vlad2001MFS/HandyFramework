@@ -78,4 +78,15 @@ void Image::destroy() {
     mHeight = 0;
 }
 
+void Image::flipVertical() {
+    hd::Color4 *buf = new hd::Color4[mWidth*mHeight];
+    memcpy(buf, mData, sizeof(hd::Color4)*mWidth*mHeight);
+    for (size_t y = 0; y < mHeight; y++) {
+        for (size_t x = 0; x < mWidth; x++) {
+            mData[y*mWidth + x] = buf[(mWidth - y - 1)*mWidth + x];
+        }
+    }
+    HD_DELETE_ARRAY(buf);
+}
+
 }

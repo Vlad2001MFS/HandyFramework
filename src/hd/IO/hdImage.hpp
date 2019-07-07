@@ -19,6 +19,7 @@ public:
     void create(StreamReader &stream);
     void create(const std::string &filename);
     void destroy();
+    void flipVertical();
     uint32_t getWidth() const { return mWidth; }
     uint32_t getHeight() const { return mHeight; }
     const Color4 *getPixels() const { return mData; }
