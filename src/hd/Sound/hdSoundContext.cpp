@@ -2,6 +2,7 @@
 #include "../IO/hdFileStream.hpp"
 #include "../../3rd/include/SDL2/SDL_mixer.h"
 #include <memory>
+#include <algorithm>
 
 namespace hd {
 
@@ -77,6 +78,7 @@ HSound SoundContext::createSoundFromFile(const std::string &filename) {
 
 void SoundContext::destroySound(HSound &handle) {
     if (handle) {
+        mSounds.erase(std::remove(mSounds.begin(), mSounds.end(), handle), mSounds.end());
         Mix_FreeChunk(handle->chunk);
         HD_DELETE(handle.value);
         handle.invalidate();
@@ -144,6 +146,7 @@ HMusic SoundContext::createMusicFromFile(const std::string &filename) {
 
 void SoundContext::destroyMusic(HMusic &handle) {
     if (handle) {
+        mMusics.erase(std::remove(mMusics.begin(), mMusics.end(), handle), mMusics.end());
         Mix_FreeMusic(handle->music);
         HD_DELETE(handle.value);
         handle.invalidate();
