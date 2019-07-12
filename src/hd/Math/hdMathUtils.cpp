@@ -23,6 +23,15 @@ int MathUtils::randomInt32(int min, int max) {
     return std::rand() % max + min;
 }
 
+glm::mat4 MathUtils::ortho2D(float left, float right, float bottom, float top) {
+    return glm::mat4(
+         2.0f / (right - left),            0.0f,                            0.0f, 0.0f,
+         0.0f,                            -2.0f / (bottom - top),           0.0f, 0.0f,
+         0.0f,                             0.0f,                            1.0f, 0.0f,
+        -(right + left) / (right - left),  (bottom + top) / (bottom - top), 0.0f, 1.0f
+    );
+}
+
 AABB::AABB() : mPos(0, 0, 0), mSize(0, 0, 0) {
 }
 

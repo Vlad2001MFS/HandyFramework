@@ -11,6 +11,8 @@ public:
     static bool compareDouble(double a, double b);
 
     static int randomInt32(int min, int max);
+
+    static glm::mat4 ortho2D(float left, float right, float bottom, float top);
 };
 
 class AABB {
