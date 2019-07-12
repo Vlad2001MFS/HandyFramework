@@ -36,6 +36,7 @@
     <ClCompile Include="src\hd\IO\hdStream.cpp" />
     <ClCompile Include="src\hd\Math\hdFirstPersonCamera.cpp" />
     <ClCompile Include="src\hd\Math\hdMathUtils.cpp" />
+    <ClCompile Include="src\hd\Sound\hdSoundContext.cpp" />
     <ClCompile Include="src\hd\System\hdBaseApp.cpp" />
     <ClCompile Include="src\hd\System\hdOSSpecificInfo.cpp" />
     <ClCompile Include="src\hd\System\hdWindow.cpp" />
@@ -149,6 +150,7 @@
     <ClInclude Include="src\hd\IO\hdStream.hpp" />
     <ClInclude Include="src\hd\Math\hdFirstPersonCamera.hpp" />
     <ClInclude Include="src\hd\Math\hdMathUtils.hpp" />
+    <ClInclude Include="src\hd\Sound\hdSoundContext.hpp" />
     <ClInclude Include="src\hd\System\hdBaseApp.hpp" />
     <ClInclude Include="src\hd\System\hdOSSpecificInfo.hpp" />
     <ClInclude Include="src\hd\System\hdWindow.hpp" />

@@ -37,6 +37,9 @@
     <Filter Include="src\3rd\include\GLEW">
       <UniqueIdentifier>{d0746024-d359-445c-a118-999f9f03c5c0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\hd\Sound">
+      <UniqueIdentifier>{88628555-73be-4d14-98cc-cf3d6df510e3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\hd\Core\hdClock.cpp">
@@ -98,6 +101,9 @@
     </ClCompile>
     <ClCompile Include="src\hd\Math\hdFirstPersonCamera.cpp">
       <Filter>src\hd\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\hd\Sound\hdSoundContext.cpp">
+      <Filter>src\hd\Sound</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -436,6 +442,9 @@
     </ClInclude>
     <ClInclude Include="src\hd\Math\hdFirstPersonCamera.hpp">
       <Filter>src\hd\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\hd\Sound\hdSoundContext.hpp">
+      <Filter>src\hd\Sound</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
