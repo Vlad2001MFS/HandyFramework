@@ -105,6 +105,9 @@
     <ClCompile Include="src\hd\Sound\hdSoundContext.cpp">
       <Filter>src\hd\Sound</Filter>
     </ClCompile>
+    <ClCompile Include="src\hd\IO\hdFont.cpp">
+      <Filter>src\hd\IO</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\hd\Core\hdClock.hpp">
@@ -445,6 +448,15 @@
     </ClInclude>
     <ClInclude Include="src\hd\Sound\hdSoundContext.hpp">
       <Filter>src\hd\Sound</Filter>
+    </ClInclude>
+    <ClInclude Include="src\hd\IO\hdFont.hpp">
+      <Filter>src\hd\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="src\3rd\include\SDL2\SDL_mixer.h">
+      <Filter>src\3rd\include\SDL2</Filter>
+    </ClInclude>
+    <ClInclude Include="src\3rd\include\SDL2\SDL_ttf.h">
+      <Filter>src\3rd\include\SDL2</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
