@@ -12,15 +12,8 @@ class Delegate {
 public:
     Delegate() {}
 
-    template<typename ...Args2>
-    void connect(const auto &func, Args2 &&...args) {
-        auto callback = static_cast<std::function<void(Args...)>>(func);
-        mFunctions.push_back(std::bind(func, args...));
-    }
-    
-    template<typename ClassType, typename ...Args2>
-    void connect(void(ClassType::*func)(Args...), Args2 &&...args) {
-        mFunctions.push_back(std::bind(func, args...));
+    void connect(const std::function<FuncSig> &f) {
+        mFunctions.push_back(f);
     }
 
     void operator()(Args &&...args) const {
