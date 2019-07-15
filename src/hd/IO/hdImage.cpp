@@ -65,6 +65,7 @@ void Image::create(StreamReader &stream) {
     mData = reinterpret_cast<Color4*>(data);
     mWidth = w;
     mHeight = h;
+    mPath = stream.getName();
 }
 
 void Image::create(const std::string &filename) {
@@ -87,6 +88,10 @@ void Image::flipVertical() {
         }
     }
     HD_DELETE_ARRAY(buf);
+}
+
+const std::string& Image::getPath() const {
+    return mPath;
 }
 
 }
