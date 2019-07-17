@@ -30,6 +30,16 @@ void SerializerRW::destroy() {
     HD_DELETE(mDeserializer);
 }
 
+void SerializerRW::processBuffer(void* buffer, size_t size) {
+    HD_ASSERT(mSerializer || mDeserializer);
+    if (mSerializer) {
+        mSerializer->writeBuffer(buffer, size);
+    }
+    else {
+        mDeserializer->readBuffer(buffer, size);
+    }
+}
+
 void SerializerRW::processString(const std::string &value) {
     HD_ASSERT(mSerializer);
     mSerializer->writeString(value);

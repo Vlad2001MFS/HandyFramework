@@ -36,6 +36,20 @@ public:
         return mDeserializer->read<T>();
     }
 
+    template<typename T>
+    void processVector(std::vector<T> &v) {
+        HD_ASSERT(mSerializer || mDeserializer);
+        if (mSerializer) {
+            process<uint64_t>(v.size());
+            processBuffer(v.data(), sizeof(T)*v.size());
+        }
+        else {
+            v.resize(process<uint64_t>());
+            processBuffer(v.data(), sizeof(T)*v.size());
+        }
+    }
+
+    void processBuffer(void *buffer, size_t size);
     void processString(const std::string &value);
     void processString(std::string &value);
     std::string processString();
