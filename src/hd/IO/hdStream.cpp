@@ -38,4 +38,8 @@ std::string StreamReader::readAllText() {
 
 StreamWriter::~StreamWriter() {}
 
+size_t StreamWriter::writeString(const std::string &data) {
+    return write(data.data(), sizeof(char)*data.size());
+}
+
 }

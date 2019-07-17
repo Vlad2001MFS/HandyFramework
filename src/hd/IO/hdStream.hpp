@@ -51,6 +51,8 @@ public:
 
     virtual size_t write(const void *data, size_t size) = 0;
 
+    size_t writeString(const std::string &data);
+
     template<typename T>
     size_t write(const T &value) {
         return write(&value, sizeof(value));
