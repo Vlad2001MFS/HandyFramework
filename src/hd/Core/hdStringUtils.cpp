@@ -116,6 +116,18 @@ std::string StringUtils::subStr(const std::string &str, const std::string &leftS
     return str.substr(offset, count);
 }
 
+std::string StringUtils::replace(const std::string& str, const std::string& from, const std::string& to) {
+    size_t startPos = str.find(from);
+    if (startPos == std::string::npos) {
+        return str;
+    }
+    else {
+        std::string result = str;
+        result.replace(startPos, from.length(), to);
+        return result;
+    }
+}
+
 std::string StringUtils::removeSymbols(const std::string &str, const std::string &symbols, bool caseSensitive) {
     std::string result = str;
     for (const auto &ch : symbols) {

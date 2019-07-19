@@ -23,6 +23,7 @@ public:
     static std::string afterLast(const std::string &str, const std::string &separator);
     static std::string subStr(const std::string &str, char leftSeparator, char rightSeparator);
     static std::string subStr(const std::string &str, const std::string &leftSeparator, const std::string &rightSeparator);
+    static std::string replace(const std::string &str, const std::string &from, const std::string &to);
     static std::string removeSymbols(const std::string &str, const std::string &symbols, bool caseSensitive);
     static size_t symbolsCount(const std::string &str, const std::string &symbols, bool caseSensitive);
     static size_t symbolsCount(const std::string &str, char symbol, bool caseSensitive);
