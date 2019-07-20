@@ -22,6 +22,11 @@ public:
         }
     }
 
+    Delegate &operator+=(const std::function<FuncSig> &rhs) {
+        connect(rhs);
+        return *this;
+    }
+
 private:
     std::vector<std::function<FuncSig>> mFunctions;
 };
