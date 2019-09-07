@@ -1,96 +1,103 @@
 #include "hdImage.hpp"
 #include "hdFileStream.hpp"
+#include "../Core/hdLog.hpp"
 #define STB_IMAGE_IMPLEMENTATION
+#define STBI_FAILURE_USERMSG
 #include "../../3rd/include/stb/stb_image.h"
-#include <memory>
-#include <vector>
 
 namespace hd {
 
-Image::Image() {
-    mData = nullptr;
-    mWidth = 0;
-    mHeight = 0;
+Image::Image() : mSize(0, 0) {
+    mFmt = ImageFormat::None;
 }
 
-Image::Image(const Color4 *data, uint32_t w, uint32_t h) : Image() {
-    create(data, w, h);
+Image::Image(const void *data, const glm::ivec2 &size, ImageFormat fmt) : Image() {
+    create(data, size, fmt);
 }
 
-Image::Image(StreamReader &stream) : Image() {
-    create(stream);
+Image::Image(Stream &stream, ImageFormat requiredFmt) : Image() {
+    create(stream, requiredFmt);
 }
 
-Image::Image(const std::string &filename) : Image() {
-    create(filename);
-}
-
-Image::Image(const Image &img) : Image() {
-    create(img.getPixels(), img.getWidth(), img.getHeight());
+Image::Image(const std::string &path, ImageFormat requiredFmt) : Image() {
+    create(path, requiredFmt);
 }
 
 Image::~Image() {
     destroy();
 }
 
-Image &Image::operator=(const Image &rhs) {
-    create(rhs.getPixels(), rhs.getWidth(), rhs.getHeight());
-    return *this;
+void Image::create(const void *data, const glm::ivec2 &size, ImageFormat fmt) {
+    destroy();
+    HD_ASSERT(size.x > 0);
+    HD_ASSERT(size.y > 0);
+    HD_ASSERT(fmt != ImageFormat::None);
+
+    size_t dataSize = static_cast<size_t>(size.x*size.y*static_cast<int>(fmt));
+    mData.resize(dataSize);
+    mSize = size;
+    mFmt = fmt;
+
+    if (data) {
+        memcpy(mData.data(), data, dataSize);
+    }
 }
 
-void Image::create(const Color4 *data, uint32_t w, uint32_t h) {
-    HD_ASSERT(w != 0);
-    HD_ASSERT(h != 0);
-    destroy();
-    uint32_t count = w*h;
-    mData = new Color4[count];
-    if (data) {
-        memcpy(mData, data, sizeof(Color4)*count);
+void Image::create(Stream &stream, ImageFormat requiredFmt) {
+    HD_ASSERT(stream.isReadable());
+    mPath = stream.getName();
+    stbi_io_callbacks callbacks;
+    callbacks.read = [](void *userdata, char *data, int size) {
+        return static_cast<int>(static_cast<Stream*>(userdata)->read(data, static_cast<size_t>(size)));
+    };
+    callbacks.skip = [](void *userdata, int size) {
+        static_cast<Stream*>(userdata)->seek(static_cast<Stream*>(userdata)->tell() + static_cast<size_t>(size));
+    };
+    callbacks.eof = [](void *userdata) {
+        return static_cast<int>(static_cast<Stream*>(userdata)->isEOF());
+    };
+    int width, height, components;
+    uint8_t *data = stbi_load_from_callbacks(&callbacks, &stream, &width, &height, &components, static_cast<int>(requiredFmt));
+    if (!data) {
+        HD_LOG_ERROR("Failed to load image from stream '%s'. Error: %s", stream.getName().data(), stbi_failure_reason());
+    }
+    if (requiredFmt != ImageFormat::None) {
+        create(data, glm::ivec2(width, height), requiredFmt);
     }
     else {
-        memset(mData, 0, sizeof(Color4)*count);
+        create(data, glm::ivec2(width, height), static_cast<ImageFormat>(components));
     }
-    mWidth = w;
-    mHeight = h;
+    stbi_image_free(data);
 }
 
-void Image::create(StreamReader &stream) {
-    std::vector<uint8_t> buf(stream.getSize());
-    stream.read(buf.data(), stream.getSize());
-    int w, h, channels;
-    uint8_t *data = stbi_load_from_memory(buf.data(), static_cast<int>(buf.size()), &w, &h, &channels, 4);
-    if (!data) {
-        HD_LOG_ERROR("Failed to load image from stream '%s'", stream.getName().data());
-    }
-    mData = reinterpret_cast<Color4*>(data);
-    mWidth = w;
-    mHeight = h;
-    mPath = stream.getName();
-}
-
-void Image::create(const std::string &filename) {
-    FileReader fs(filename);
-    create(fs);
+void Image::create(const std::string &path, ImageFormat requiredFmt) {
+    FileStream fs(path, FileMode::Read);
+    create(fs, requiredFmt);
 }
 
 void Image::destroy() {
-    stbi_image_free(mData);
-    mWidth = 0;
-    mHeight = 0;
+    mData.clear();
+    mSize = glm::ivec2(0, 0);
+    mFmt = ImageFormat::None;
 }
 
-void Image::flipVertical() {
-    hd::Color4 *buf = new hd::Color4[mWidth*mHeight];
-    memcpy(buf, mData, sizeof(hd::Color4)*mWidth*mHeight);
-    for (size_t y = 0; y < mHeight; y++) {
-        for (size_t x = 0; x < mWidth; x++) {
-            mData[y*mWidth + x] = buf[(mWidth - y - 1)*mWidth + x];
-        }
-    }
-    HD_DELETE_ARRAY(buf);
+const void *Image::getData() const {
+    return mData.data();
 }
 
-const std::string& Image::getPath() const {
+void *Image::getData() {
+    return mData.data();
+}
+
+const glm::ivec2 &Image::getSize() const {
+    return mSize;
+}
+
+ImageFormat Image::getFormat() const {
+    return mFmt;
+}
+
+const std::string &Image::getPath() const {
     return mPath;
 }
 

@@ -1,19 +1,18 @@
-#include "hdClock.hpp"
+#include "hdTime.hpp"
 #include <ctime>
 #include <limits>
 
 namespace hd {
 
 Time::Time() {
-    mTime = 0.0f;
+    mTime = 0.0F;
 }
 
 Time::Time(float raw) {
     mTime = raw;
 }
 
-Time::~Time() {
-}
+Time::~Time() = default;
 
 Time Time::operator+(const Time &rhs) const {
     return Time(mTime + rhs.mTime);
@@ -58,7 +57,7 @@ float Time::getRaw() const {
 }
 
 float Time::getMilliseconds() const {
-    return getSeconds()*1000.0f;
+    return getSeconds()*1000.0F;
 }
 
 float Time::getSeconds() const {
@@ -66,19 +65,19 @@ float Time::getSeconds() const {
 }
 
 float Time::getMinutes() const {
-    return getSeconds() / 60.0f;
+    return getSeconds() / 60.0F;
 }
 
 float Time::getHours() const {
-    return getMinutes() / 60.0f;
+    return getMinutes() / 60.0F;
 }
 
 float Time::getDays() const {
-    return getHours() / 24.0f;
+    return getHours() / 24.0F;
 }
 
 Time Time::fromMilliseconds(float time) {
-    return fromSeconds(time / 1000.0f);
+    return fromSeconds(time / 1000.0F);
 }
 
 Time Time::fromSeconds(float time) {
@@ -86,22 +85,22 @@ Time Time::fromSeconds(float time) {
 }
 
 Time Time::fromMinutes(float time) {
-    return fromSeconds(time*60.0f);
+    return fromSeconds(time*60.0F);
 }
 
 Time Time::fromHours(float time) {
-    return fromMinutes(time*60.0f);
+    return fromMinutes(time*60.0F);
 }
 
 Time Time::fromDays(float time) {
-    return fromHours(time*24.0f);
+    return fromHours(time*24.0F);
 }
 
-Time Clock::getTime() {
+Time Time::getCurrentTime() {
     return Time(static_cast<float>(clock()));
 }
 
-Time Clock::getElapsedTime(const Time &startTime) {
+Time Time::getElapsedTime(const Time &startTime) {
     return Time(static_cast<float>(clock())) - startTime;
 }
 

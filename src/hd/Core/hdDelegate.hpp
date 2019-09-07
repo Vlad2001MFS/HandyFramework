@@ -1,13 +1,13 @@
 #pragma once
-#include "hdCommon.hpp"
+#include "hdMacros.hpp"
 #include <vector>
 #include <functional>
 
-namespace  hd {
+namespace hd {
 
 template<typename ...Args>
 class Delegate {
-    HD_NONCOPYABLE_CLASS(Delegate)
+    HD_NONCOPYABLE_CLASS(Delegate);
     using FuncSig = void(Args...);
 public:
     Delegate() {}

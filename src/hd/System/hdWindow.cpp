@@ -1,10 +1,11 @@
 #include "hdWindow.hpp"
-#include "hdOSSpecificInfo.hpp"
+#include "../Core/hdLog.hpp"
 #include "../../3rd/include/SDL2/SDL.h"
+#include "../../3rd/include/SDL2/SDL_syswm.h"
 
 namespace hd {
 
-static const int gKeyCodes[] =
+static const SDL_Scancode gKeyCodes[] =
 {
     SDL_SCANCODE_UNKNOWN,
 
@@ -43,59 +44,67 @@ static const uint32_t gMouseButtons[] = {
     SDL_BUTTON_X2
 };
 
-uint32_t getSDLWindowFlagsFromWindowFlags(WindowFlags flags);
-KeyCode getKeyCodeFromSDLScanCode(int16_t key);
-
-struct _SDLVideoSystem {
-    _SDLVideoSystem() {
-        if (SDL_VideoInit(nullptr) < 0) {
-            HD_LOG_ERROR("Failed to initialize SDL video system. Errors: %s", SDL_GetError());
-        }
-    }
-    ~_SDLVideoSystem() {
-        SDL_VideoQuit();
-    }
-} _gSDLVideoSystem;
+SDL_WindowFlags getSDLWindowFlagsFromWindowFlags(WindowFlags flags);
+KeyCode getKeyCodeFromSDLScanCode(SDL_Scancode key);
 
 struct Window::Impl {
     SDL_Window *window = nullptr;
-    SDL_Surface *windowSurface = nullptr;
-    SDL_GLContext openglContext = nullptr;
-    WindowFlags flags = WindowFlags::None;
+    SDL_GLContext glContext = nullptr;
+    SDL_Renderer *renderer = nullptr;
+    SDL_Texture *texture = nullptr;
+    bool isSurfaceLocked = false;
+    bool isNeedSurfaceResize = true;
     OpenGLContextSettings contextSettings;
+    WindowFlags flags;
     bool isFocused = true;
 
-    void createWindow(const std::string &title, uint32_t w, uint32_t h, WindowFlags flags, bool forOpenGL) {
+    void create(const std::string &title, const glm::ivec2 &size, WindowFlags flags,
+        const OpenGLContextSettings &contextSettings, bool isOpenGL) {
+        if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+            HD_LOG_ERROR("Failed to initialize SDL2. Error:\n%s", SDL_GetError());
+        }
+
         uint32_t sdlFlags = SDL_WINDOW_SHOWN | getSDLWindowFlagsFromWindowFlags(flags);
-        if (forOpenGL) {
+        if (isOpenGL) {
             sdlFlags |= SDL_WINDOW_OPENGL;
+            if (contextSettings.isDebug) {
+                SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+            }
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, static_cast<int>(contextSettings.majorVersion));
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, static_cast<int>(contextSettings.minorVersion));
+            if (contextSettings.isCoreProfile) {
+                SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+            }
+            else {
+                SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+            }
+            SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, static_cast<int>(contextSettings.depthBits));
+            SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, static_cast<int>(contextSettings.stencilBits));
+            SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, contextSettings.msaaSamples > 0);
+            SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, static_cast<int>(contextSettings.msaaSamples));
         }
+
         this->flags = flags;
-        this->window = SDL_CreateWindow(title.data(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h, sdlFlags);
+        this->window = SDL_CreateWindow(title.data(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+            size.x, size.y, sdlFlags);
         if (!this->window) {
-            HD_LOG_ERROR("Failed to create '%s' window %dx%d. Errors: %s", title.data(), w, h, SDL_GetError());
+            HD_LOG_ERROR("Failed to create window. Error:\n%s", SDL_GetError());
         }
-        this->windowSurface = SDL_GetWindowSurface(this->window); // Channel order in memory: BGRA
-        if (this->windowSurface->format->format != SDL_PIXELFORMAT_RGB888) {
-            HD_LOG_ERROR("Unsupported window pixel format '%s'", SDL_GetPixelFormatName(this->windowSurface->format->format));
+
+        if (isOpenGL) {
+            this->contextSettings = contextSettings;
+            this->glContext = SDL_GL_CreateContext(this->window);
+            if (!this->glContext) {
+                HD_LOG_ERROR("Failed to create OpenGL context. Error:\n%s", SDL_GetError());
+            }
         }
 
         SDL_Event resizeEvent;
         resizeEvent.type = SDL_WINDOWEVENT;
         resizeEvent.window.event = SDL_WINDOWEVENT_RESIZED;
-        resizeEvent.window.data1 = w;
-        resizeEvent.window.data2 = h;
+        resizeEvent.window.data1 = size.x;
+        resizeEvent.window.data2 = size.y;
         SDL_PushEvent(&resizeEvent);
-    }
-
-    void createContext(const OpenGLContextSettings &contextSettings) {
-        this->contextSettings = contextSettings;
-        this->openglContext = SDL_GL_CreateContext(this->window);
-        if (!this->openglContext) {
-            HD_LOG_ERROR("Failed to create %sOpenGL %d.%d context with %d depth bits, %d stencil bits and %d MSAA samples. Errors: %s",
-                contextSettings.isCoreProfile ? "core profile " : "", contextSettings.majorVersion, contextSettings.minorVersion,
-                contextSettings.depthBits, contextSettings.stencilBits, contextSettings.msaaSamples, SDL_GetError());
-        }
     }
 };
 
@@ -113,7 +122,9 @@ OpenGLContextSettings::OpenGLContextSettings() {
 #endif
 }
 
-OpenGLContextSettings::OpenGLContextSettings(uint32_t majorVersion, uint32_t minorVersion, uint32_t depthBits, uint32_t stencilBits, uint32_t msaaSamples, bool isCoreProfile, bool isDebug) {
+OpenGLContextSettings::OpenGLContextSettings(uint32_t majorVersion, uint32_t minorVersion, uint32_t depthBits,
+    uint32_t stencilBits, uint32_t msaaSamples,
+    bool isCoreProfile, bool isDebug) {
     this->majorVersion = majorVersion;
     this->minorVersion = minorVersion;
     this->depthBits = depthBits;
@@ -126,101 +137,88 @@ OpenGLContextSettings::OpenGLContextSettings(uint32_t majorVersion, uint32_t min
 Window::Window() : impl(new Impl()) {
 }
 
-Window::Window(const std::string &title, uint32_t w, uint32_t h, WindowFlags flags) : Window() {
-    create(title, w, h, flags);
+Window::Window(const std::string &title, const glm::ivec2 &size, WindowFlags flags) : Window() {
+    create(title, size, flags);
 }
 
-Window::Window(const std::string &title, uint32_t w, uint32_t h, WindowFlags flags, const OpenGLContextSettings &contextSettings) : Window() {
-    create(title, w, h, flags, contextSettings);
+Window::Window(const std::string &title, const glm::ivec2 &size, WindowFlags flags,
+    const OpenGLContextSettings &contextSettings) : Window() {
+    create(title, size, flags, contextSettings);
 }
 
 Window::~Window() {
     destroy();
 }
 
-void Window::create(const std::string &title, uint32_t w, uint32_t h, WindowFlags flags) {
+void Window::create(const std::string &title, const glm::ivec2 &size, WindowFlags flags) {
     destroy();
-    impl->createWindow(title, w, h, flags, false);
-    SDL_ShowWindow(impl->window);
+    impl->create(title, size, flags, OpenGLContextSettings(), false);
 }
 
-void Window::create(const std::string &title, uint32_t w, uint32_t h, WindowFlags flags, const OpenGLContextSettings &contextSettings) {
+void Window::create(const std::string &title, const glm::ivec2 &size, WindowFlags flags,
+    const OpenGLContextSettings &contextSettings) {
     destroy();
-    if (contextSettings.isDebug) {
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
-    }
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, static_cast<int>(contextSettings.majorVersion));
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, static_cast<int>(contextSettings.minorVersion));
-    if (contextSettings.isCoreProfile) {
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    }
-    else {
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
-    }
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, static_cast<int>(contextSettings.depthBits));
-    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, static_cast<int>(contextSettings.stencilBits));
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, contextSettings.msaaSamples > 0);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, static_cast<int>(contextSettings.msaaSamples));
-    impl->createWindow(title, w, h, flags, true);
-    impl->createContext(contextSettings);
-    SDL_ShowWindow(impl->window);
-    setVSyncState(false);
+    impl->create(title, size, flags, contextSettings, true);
 }
 
 void Window::destroy() {
-    if (isOpened()) {
-        if (impl->openglContext) {
-            SDL_GL_DeleteContext(impl->openglContext);
-        }
-        SDL_DestroyWindow(impl->window);
-        *impl = Impl();
+    if (impl->texture) {
+        SDL_DestroyTexture(impl->texture);
     }
-}
-
-void Window::activate() {
-    if (isOpened() && impl->openglContext) {
-        if (SDL_GL_MakeCurrent(impl->window, impl->openglContext) < 0) {
-            HD_LOG_ERROR("Failed to activate window %s. Errors: %s", SDL_GetWindowTitle(impl->window), SDL_GetError());
-        }
+    if (impl->renderer) {
+        SDL_DestroyRenderer(impl->renderer);
     }
+    if (impl->glContext) {
+        SDL_GL_DeleteContext(impl->glContext);
+    }
+    SDL_DestroyWindow(impl->window);
+    SDL_Quit();
+    *impl = Impl();
 }
 
 bool Window::processEvent(WindowEvent &e) {
     SDL_Event sdlEvent = { 0 };
     if (SDL_PollEvent(&sdlEvent)) {
-        uint32_t mouseState;
         switch (sdlEvent.type) {
-            case SDL_QUIT:
+            case SDL_QUIT: {
                 e.type = WindowEventType::Close;
                 return true;
-            case SDL_WINDOWEVENT:
+            }
+            case SDL_WINDOWEVENT: {
                 switch (sdlEvent.window.event) {
-                    case SDL_WINDOWEVENT_RESIZED:
+                    case SDL_WINDOWEVENT_RESIZED: {
                         e.type = WindowEventType::Resize;
                         e.resize.width = sdlEvent.window.data1;
                         e.resize.height = sdlEvent.window.data2;
+                        impl->isNeedSurfaceResize = true;
                         return true;
-                    case SDL_WINDOWEVENT_FOCUS_LOST:
+                    }
+                    case SDL_WINDOWEVENT_FOCUS_LOST: {
                         e.type = WindowEventType::FocusLost;
                         impl->isFocused = false;
                         return true;
-                    case SDL_WINDOWEVENT_FOCUS_GAINED:
+                    }
+                    case SDL_WINDOWEVENT_FOCUS_GAINED: {
                         e.type = WindowEventType::FocusGained;
                         impl->isFocused = true;
                         return true;
+                    }
                 }
                 break;
+            }
             case SDL_KEYDOWN:
-            case SDL_KEYUP:
+            case SDL_KEYUP: {
                 e.type = WindowEventType::Key;
                 e.key.state = sdlEvent.type == SDL_KEYDOWN ? KeyState::Pressed : KeyState::Released;
                 e.key.code = getKeyCodeFromSDLScanCode(sdlEvent.key.keysym.scancode);
-                e.key.alt = SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_LALT] || SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_RALT];
-                e.key.control = SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_LCTRL] || SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_RCTRL];
-                e.key.shift = SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_LSHIFT] || SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_RSHIFT];
-                e.key.system = SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_LGUI] || SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_RGUI];
+                const uint8_t *keys = SDL_GetKeyboardState(nullptr);
+                e.key.alt = keys[SDL_SCANCODE_LALT] || keys[SDL_SCANCODE_RALT];
+                e.key.control = keys[SDL_SCANCODE_LCTRL] || keys[SDL_SCANCODE_RCTRL];
+                e.key.shift = keys[SDL_SCANCODE_LSHIFT] || keys[SDL_SCANCODE_RSHIFT];
+                e.key.system = keys[SDL_SCANCODE_LGUI] || keys[SDL_SCANCODE_RGUI];
                 return isFocused();
-            case SDL_MOUSEWHEEL:
+            }
+            case SDL_MOUSEWHEEL: {
                 e.type = WindowEventType::MouseWheel;
                 if (sdlEvent.wheel.direction == SDL_MOUSEWHEEL_FLIPPED) {
                     e.mouseWheel.x = -sdlEvent.wheel.x;
@@ -230,59 +228,67 @@ bool Window::processEvent(WindowEvent &e) {
                     e.mouseWheel.x = sdlEvent.wheel.x;
                     e.mouseWheel.y = sdlEvent.wheel.y;
                 }
-                mouseState = SDL_GetMouseState(nullptr, nullptr);
+                uint32_t mouseState = SDL_GetMouseState(nullptr, nullptr);
                 e.mouseWheel.leftButton   = HD_FLAG_EXIST(mouseState, SDL_BUTTON(SDL_BUTTON_LEFT  ));
                 e.mouseWheel.middleButton = HD_FLAG_EXIST(mouseState, SDL_BUTTON(SDL_BUTTON_MIDDLE));
                 e.mouseWheel.rightButton  = HD_FLAG_EXIST(mouseState, SDL_BUTTON(SDL_BUTTON_RIGHT ));
                 e.mouseWheel.xButton1     = HD_FLAG_EXIST(mouseState, SDL_BUTTON(SDL_BUTTON_X1    ));
                 e.mouseWheel.xButton2     = HD_FLAG_EXIST(mouseState, SDL_BUTTON(SDL_BUTTON_X2    ));
-                e.mouseWheel.control = SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_LCTRL] || SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_RCTRL];
-                e.mouseWheel.shift = SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_LSHIFT] || SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_RSHIFT];
+                const uint8_t *keys = SDL_GetKeyboardState(nullptr);
+                e.mouseWheel.control = keys[SDL_SCANCODE_LCTRL] || keys[SDL_SCANCODE_RCTRL];
+                e.mouseWheel.shift = keys[SDL_SCANCODE_LSHIFT] || keys[SDL_SCANCODE_RSHIFT];
                 return isFocused();
+            }
             case SDL_MOUSEBUTTONUP:
-            case SDL_MOUSEBUTTONDOWN:
+            case SDL_MOUSEBUTTONDOWN: {
                 e.type = WindowEventType::MouseButton;
                 e.mouseButton.state = sdlEvent.type == SDL_MOUSEBUTTONDOWN ? KeyState::Pressed : KeyState::Released;
                 switch (sdlEvent.button.button) {
-                    case SDL_BUTTON_LEFT:
+                    case SDL_BUTTON_LEFT: {
                         e.mouseButton.btn = MouseButton::Left;
                         break;
-                    case SDL_BUTTON_MIDDLE:
+                    }
+                    case SDL_BUTTON_MIDDLE: {
                         e.mouseButton.btn = MouseButton::Middle;
                         break;
-                    case SDL_BUTTON_RIGHT:
+                    }
+                    case SDL_BUTTON_RIGHT: {
                         e.mouseButton.btn = MouseButton::Right;
                         break;
-                    case SDL_BUTTON_X1:
+                    }
+                    case SDL_BUTTON_X1: {
                         e.mouseButton.btn = MouseButton::X1;
                         break;
-                    case SDL_BUTTON_X2:
+                    }
+                    case SDL_BUTTON_X2: {
                         e.mouseButton.btn = MouseButton::X2;
                         break;
+                    }
                 }
                 e.mouseButton.x = sdlEvent.button.x;
                 e.mouseButton.y = sdlEvent.button.y;
                 return isFocused();
-            case SDL_MOUSEMOTION:
+            }
+            case SDL_MOUSEMOTION: {
                 e.type = WindowEventType::MouseMove;
                 e.mouseMove.x = sdlEvent.motion.x;
                 e.mouseMove.y = sdlEvent.motion.y;
                 e.mouseMove.deltaX = sdlEvent.motion.xrel;
                 e.mouseMove.deltaY = sdlEvent.motion.yrel;
                 return isFocused();
+            }
         }
     }
     return false;
 }
 
 void Window::swapBuffers() {
-    if (isOpened()) {
-        if (impl->openglContext) {
-            SDL_GL_SwapWindow(impl->window);
-        }
-        else {
-            SDL_UpdateWindowSurface(impl->window);
-        }
+    if (impl->glContext) {
+        SDL_GL_SwapWindow(impl->window);
+    }
+    else if (impl->renderer && !impl->isSurfaceLocked) {
+        SDL_RenderCopy(impl->renderer, impl->texture, nullptr, nullptr);
+        SDL_RenderPresent(impl->renderer);
     }
 }
 
@@ -292,187 +298,179 @@ void Window::close() {
     SDL_PushEvent(&event);
 }
 
-void Window::setHighPriorityProcess() {
-    SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
+void Window::activate() {
+    if (impl->glContext) {
+        if (SDL_GL_MakeCurrent(impl->window, impl->glContext) < 0) {
+            HD_LOG_ERROR("Failed to set OpenGL context as current. Errors: %s", SDL_GetError());
+        }
+    }
+}
+
+void *Window::lockSurface() {
+    if (!impl->renderer) {
+        if (impl->glContext) {
+            HD_LOG_ERROR("Failed to get surface from OpenGL window");
+        }
+        impl->renderer = SDL_CreateRenderer(impl->window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+        HD_ASSERT(impl->renderer);
+    }
+    if (impl->isNeedSurfaceResize) {
+        if (impl->texture) {
+            SDL_DestroyTexture(impl->texture);
+        }
+        impl->texture = SDL_CreateTexture(impl->renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, getSize().x, getSize().y);
+        HD_ASSERT(impl->texture);
+        impl->isNeedSurfaceResize = false;
+    }
+
+    if (impl->isSurfaceLocked) {
+        HD_LOG_ERROR("Failed to lock window surface. The surface already locked");
+    }
+
+    void *surface;
+    int pitch;
+    int result = SDL_LockTexture(impl->texture, nullptr, &surface, &pitch);
+    if (result != 0) {
+        HD_LOG_ERROR("Failed to lock window surface");
+    }
+    impl->isSurfaceLocked = true;
+    return surface;
+}
+
+void Window::unlockSurface() {
+    if (!impl->isSurfaceLocked) {
+        HD_LOG_ERROR("Failed to unlock window surface. The surface wasn't locked");
+    }
+    SDL_UnlockTexture(impl->texture);
+    impl->isSurfaceLocked = false;
+}
+
+void Window::setTitle(const std::string &title) {
+    SDL_SetWindowTitle(impl->window, title.data());
+}
+
+void Window::setPosition(const glm::ivec2 &pos) {
+    SDL_SetWindowPosition(impl->window, pos.x, pos.y);
+}
+
+void Window::setSize(const glm::ivec2 &size) {
+    SDL_SetWindowSize(impl->window, size.x, size.y);
+}
+
+void Window::setCursorPosition(const glm::ivec2 &pos) {
+    SDL_WarpMouseInWindow(impl->window, pos.x, pos.y);
+}
+
+void Window::setCursorVisible(bool visible) {
+    SDL_ShowCursor(visible ? SDL_ENABLE : SDL_DISABLE);
 }
 
 void Window::setVSyncState(bool vsync) {
     SDL_GL_SetSwapInterval(vsync ? 1 : 0);
 }
 
-bool Window::getVSyncState() const {
-    return SDL_GL_GetSwapInterval();
-}
-
-void Window::setCursorPosition(int x, int y) {
-    if (isOpened()) {
-        SDL_WarpMouseInWindow(impl->window, x, y);
-    }
-}
-
-int Window::getCursorPositionX() const {
-    int x;
-    if (isOpened()) {
-        SDL_GetMouseState(&x, nullptr);
-    }
-    return x;
-}
-
-int Window::getCursorPositionY() const {
-    int y;
-    if (isOpened()) {
-        SDL_GetMouseState(nullptr, &y);
-    }
-    return y;
-}
-
-void Window::setCursorVisible(bool visible) {
-    if (isOpened()) {
-        SDL_ShowCursor(visible ? SDL_ENABLE : SDL_DISABLE);
-    }
-}
-
-bool Window::isCursorVisible() const {
-    return isOpened() && SDL_ShowCursor(SDL_QUERY);
-}
-
-bool Window::isKeyDown(KeyCode code) const {
-    return isOpened() && isFocused() && SDL_GetKeyboardState(nullptr)[gKeyCodes[static_cast<size_t>(code)]];
-}
-
-bool Window::isMouseButtonDown(MouseButton button) const {
-    return isOpened() && isFocused() && HD_FLAG_EXIST(SDL_GetMouseState(nullptr, nullptr), SDL_BUTTON(gMouseButtons[static_cast<size_t>(button)]));
-}
-
-bool Window::isOpened() const {
-    return impl->window != nullptr;
-}
-
-bool Window::isFocused() const {
-    return impl->isFocused;
-}
-
-void Window::setTitle(const std::string &title) {
-    if (isOpened()) {
-        SDL_SetWindowTitle(impl->window, title.data());
-    }
-}
-
 std::string Window::getTitle() const {
-    if (isOpened()) {
-        return SDL_GetWindowTitle(impl->window);
-    }
-    return std::string("");
+    return SDL_GetWindowTitle(impl->window);
 }
 
-void Window::setPosition(int x, int y) {
-    if (isOpened()) {
-        SDL_SetWindowPosition(impl->window, x, y);
-    }
+glm::ivec2 Window::getPosition() const {
+    glm::ivec2 v;
+    SDL_GetWindowPosition(impl->window, &v.x, &v.y);
+    return v;
 }
 
-int Window::getPositionX() const {
-    int x;
-    if (isOpened()) {
-        SDL_GetWindowPosition(impl->window, &x, nullptr);
-    }
-    return x;
+glm::ivec2 Window::getSize() const {
+    glm::ivec2 v;
+    SDL_GetWindowSize(impl->window, &v.x, &v.y);
+    return v;
 }
 
-int Window::getPositionY() const {
-    int y;
-    if (isOpened()) {
-        SDL_GetWindowPosition(impl->window, nullptr, &y);
-    }
-    return y;
-}
-
-void Window::setSize(uint32_t w, uint32_t h) {
-    if (isOpened()) {
-        SDL_SetWindowSize(impl->window, w, h);
-    }
-}
-
-int Window::getSizeX() const {
-    int x;
-    if (isOpened()) {
-        SDL_GetWindowSize(impl->window, &x, nullptr);
-    }
-    return x;
-}
-
-int Window::getSizeY() const {
-    int y;
-    if (isOpened()) {
-        SDL_GetWindowSize(impl->window, nullptr, &y);
-    }
-    return y;
-}
-
-int Window::getCenterX() const {
-    return getSizeX() / 2;
-}
-
-int Window::getCenterY() const {
-    return getSizeY() / 2;
+glm::ivec2 Window::getCenter() const {
+    return getSize() / 2;
 }
 
 WindowFlags Window::getFlags() const {
     return impl->flags;
 }
 
-bool Window::hasOpenGLContext() const {
-    return impl->openglContext != nullptr;
+void *Window::getNativeWindowHandle() const {
+    SDL_SysWMinfo info;
+    SDL_VERSION(&info.version);
+    if (!SDL_GetWindowWMInfo(impl->window, &info)) {
+        HD_LOG_ERROR("Failed to get native window handle. Error:\n%s", SDL_GetError());
+    }
+#if defined(HD_PLATFORM_UNIX)
+    return reinterpret_cast<void*>(info.info.x11.window);
+#elif defined(HD_PLATFORM_WIN)
+    return info.info.win.window;
+#endif
+}
+
+bool Window::isFocused() const {
+    return impl->isFocused;
+}
+
+glm::ivec2 Window::getCursorPosition() const {
+    glm::ivec2 v;
+    SDL_GetMouseState(&v.x, &v.y);
+    return v;
+}
+
+bool Window::isCursorVisible() const {
+    return SDL_ShowCursor(SDL_QUERY);
+}
+
+bool Window::isKeyDown(KeyCode code) const {
+    return isFocused() && SDL_GetKeyboardState(nullptr)[gKeyCodes[static_cast<size_t>(code)]];
+}
+
+bool Window::isKeyDown(MouseButton button) const {
+    uint32_t mouseState = SDL_GetMouseState(nullptr, nullptr);
+    return isFocused() && HD_FLAG_EXIST(mouseState, SDL_BUTTON(gMouseButtons[static_cast<size_t>(button)]));
+}
+
+bool Window::getVSyncState() const {
+    return SDL_GL_GetSwapInterval();
 }
 
 const OpenGLContextSettings &Window::getOpenGLContextSettings() const {
     return impl->contextSettings;
 }
 
-Color4 *Window::getSurface() const {
-    return static_cast<Color4*>(impl->windowSurface->pixels);
+void *Window::getNativeGLContextHandle() const {
+    return impl->glContext;
 }
 
-void *Window::getOSWindowHandle() const {
-    return isOpened() ? getSystemWindowHandle(impl->window) : nullptr;
-}
-
-void *Window::getOSContextHandle() const {
-    return isOpened() ? impl->openglContext : nullptr;
-}
-
-uint32_t getSDLWindowFlagsFromWindowFlags(WindowFlags flags) {
+SDL_WindowFlags getSDLWindowFlagsFromWindowFlags(WindowFlags flags) {
     uint32_t sdlFlags = 0;
-    if (flags != WindowFlags::None) {
-        if (HD_FLAG_EXIST(flags, WindowFlags::Fullscreen)) {
-            sdlFlags |= SDL_WINDOW_FULLSCREEN;
-        }
-        if (HD_FLAG_EXIST(flags, WindowFlags::Hidden)) {
-            sdlFlags |= SDL_WINDOW_HIDDEN;
-        }
-        if (HD_FLAG_EXIST(flags, WindowFlags::Borderless)) {
-            sdlFlags |= SDL_WINDOW_BORDERLESS;
-        }
-        if (HD_FLAG_EXIST(flags, WindowFlags::Resizable)) {
-            sdlFlags |= SDL_WINDOW_RESIZABLE;
-        }
-        if (HD_FLAG_EXIST(flags, WindowFlags::Minimized)) {
-            sdlFlags |= SDL_WINDOW_MINIMIZED;
-        }
-        if (HD_FLAG_EXIST(flags, WindowFlags::Maximized)) {
-            sdlFlags |= SDL_WINDOW_MAXIMIZED;
-        }
-        if (HD_FLAG_EXIST(flags, WindowFlags::InputGrabbed)) {
-            sdlFlags |= SDL_WINDOW_INPUT_GRABBED;
-        }
-        if (HD_FLAG_EXIST(flags, WindowFlags::AllowHighDPI)) {
-            sdlFlags |= SDL_WINDOW_ALLOW_HIGHDPI;
-        }
+    if (HD_FLAG_EXIST(flags, WindowFlags::Fullscreen)) {
+        sdlFlags |= SDL_WINDOW_FULLSCREEN;
+}
+    if (HD_FLAG_EXIST(flags, WindowFlags::Hidden)) {
+        sdlFlags |= SDL_WINDOW_HIDDEN;
     }
-    return sdlFlags;
+    if (HD_FLAG_EXIST(flags, WindowFlags::Borderless)) {
+        sdlFlags |= SDL_WINDOW_BORDERLESS;
+    }
+    if (HD_FLAG_EXIST(flags, WindowFlags::Resizable)) {
+        sdlFlags |= SDL_WINDOW_RESIZABLE;
+    }
+    if (HD_FLAG_EXIST(flags, WindowFlags::Minimized)) {
+        sdlFlags |= SDL_WINDOW_MINIMIZED;
+    }
+    if (HD_FLAG_EXIST(flags, WindowFlags::Maximized)) {
+        sdlFlags |= SDL_WINDOW_MAXIMIZED;
+    }
+    if (HD_FLAG_EXIST(flags, WindowFlags::InputGrabbed)) {
+        sdlFlags |= SDL_WINDOW_INPUT_GRABBED;
+    }
+    if (HD_FLAG_EXIST(flags, WindowFlags::AllowHighDPI)) {
+        sdlFlags |= SDL_WINDOW_ALLOW_HIGHDPI;
+    }
+    return static_cast<SDL_WindowFlags>(sdlFlags);
 }
 
-KeyCode getKeyCodeFromSDLScanCode(int16_t key) {
+KeyCode getKeyCodeFromSDLScanCode(SDL_Scancode key) {
     switch (key) {
         case SDL_SCANCODE_A:
             return KeyCode::A;

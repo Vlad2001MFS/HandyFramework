@@ -1,5 +1,4 @@
 #pragma once
-#include "hdCommon.hpp"
 
 namespace hd {
 
@@ -32,16 +31,11 @@ public:
     static Time fromHours(float time);
     static Time fromDays(float time);
 
-private:
-    float mTime;
-};
-
-class Clock {
-    HD_STATIC_CLASS(Clock)
-public:
-    static Time getTime();
+    static Time getCurrentTime();
     static Time getElapsedTime(const Time &startTime);
 
+private:
+    float mTime;
 };
 
 }

@@ -5,49 +5,36 @@ typedef FILE FILE;
 
 namespace hd {
 
-class FileReader : public StreamReader {
-public:
-    FileReader();
-    explicit FileReader(const std::string &filename);
-    ~FileReader();
-
-    bool isEOF() const;
-    bool setPosition(int offset, StreamOrigin origin);
-    uint32_t getPosition() const;
-    size_t read(void *data, size_t size);
-    uint32_t getSize() const;
-
-    void open(const std::string &filename);
-    void close();
-    FILE *getHandle() const { return mHandle; }
-
-    using StreamReader::read;
-
-private:
-    FILE *mHandle;
+enum class FileMode {
+    Read,
+    Write,
+    ReadWrite
 };
 
-class FileWriter : public StreamWriter {
+class FileStream final : public Stream {
 public:
-    FileWriter();
-    explicit FileWriter(const std::string &filename);
-    ~FileWriter();
+    FileStream();
+    FileStream(const std::string &path, FileMode mode);
+    ~FileStream() override;
 
-    bool isEOF() const;
-    bool setPosition(int offset, StreamOrigin origin);
-    uint32_t getPosition() const;
-    size_t write(const void *data, size_t size);
-    uint32_t getSize() const;
+    size_t read(void *data, size_t size) override;
+    size_t write(const void *data, size_t size) override;
+    size_t tell() const override;
+    size_t getSize() const override;
+    bool seek(size_t pos) override;
+    bool isEOF() const override;
+    bool isReadable() const override;
+    bool isWritable() const override;
 
-    void open(const std::string &filename);
-    void close();
-    void flush();
-    FILE *getHandle() const { return mHandle; }
+    void create(const std::string &path, FileMode mode);
+    void destroy();
 
-    using StreamWriter::write;
+    using Stream::read;
+    using Stream::write;
 
 private:
-    FILE *mHandle;
+    FILE *mFile;
+    FileMode mMode;
 };
 
 }

@@ -1,11 +1,11 @@
 #pragma once
-#include "../Core/hdCommon.hpp"
+#include "../Core/hdMacros.hpp"
 #include "../../3rd/include/glm/glm.hpp"
 
 namespace hd {
 
 class MathUtils {
-    HD_STATIC_CLASS(MathUtils)
+    HD_STATIC_CLASS(MathUtils);
 public:
     static bool compareFloat(float a, float b);
     static bool compareDouble(double a, double b);

@@ -1,5 +1,6 @@
 #pragma once
-#include "hdClock.hpp"
+#include "hdTime.hpp"
+#include <cstdint>
 
 namespace hd {
 

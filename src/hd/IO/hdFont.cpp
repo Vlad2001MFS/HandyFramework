@@ -1,5 +1,6 @@
 #include "hdFont.hpp"
 #include "hdFileStream.hpp"
+#include "../Core/hdLog.hpp"
 #include "../../3rd/include/SDL2/SDL_ttf.h"
 
 namespace hd {
@@ -79,13 +80,13 @@ Image Font::renderLine(const std::string &text, const Color4 &color) const {
     }
     impl->convertFormat(surface);
 
-    Image img(static_cast<const Color4*>(surface->pixels), surface->w, surface->h);
+    Image img(surface->pixels, glm::ivec2(surface->w, surface->h), ImageFormat::RGBA);
     SDL_FreeSurface(surface);
 
-    hd::Color4 bg = img.getPixel(0, 0);
+    hd::Color4 bg = static_cast<hd::Color4*>(img.getData())[0];
     hd::Color4 newBg = hd::Color4::None;
-    for (int i = 0; i < img.getWidth()*img.getHeight(); i++) {
-        hd::Color4 &pixel = img.getPixels()[i];
+    for (int i = 0; i < img.getSize().x*img.getSize().y; i++) {
+        hd::Color4 &pixel = static_cast<hd::Color4*>(img.getData())[i];
         if (pixel.getRGB() == bg.getRGB()) {
             pixel = newBg;
         }
@@ -94,13 +95,13 @@ Image Font::renderLine(const std::string &text, const Color4 &color) const {
         }
     }
     hd::Color4 stokeColor = hd::Color4(0, 0, 0, 160);
-    for (int y = 0; y < img.getHeight(); y++) {
-        for (int x = 0; x < img.getWidth(); x++) {
-            if (img.getPixel(x, y).getRGB() == color.getRGB()) {
+    for (int y = 0; y < img.getSize().y; y++) {
+        for (int x = 0; x < img.getSize().x; x++) {
+            if (static_cast<hd::Color4*>(img.getData())[x + y*img.getSize().x].getRGB() == color.getRGB()) {
                 for (int ny = -1; ny <= 1; ny++) {
                     for (int nx = -1; nx <= 1; nx++) {
-                        if (img.getPixel(x + nx, y + ny).getRGB() != color.getRGB()) {
-                            img.setPixel(stokeColor, x + nx, y + ny);
+                        if (static_cast<hd::Color4*>(img.getData())[(x + nx) + (y + ny)*img.getSize().x].getRGB() != color.getRGB()) {
+                            static_cast<hd::Color4*>(img.getData())[(x + nx) + (y + ny)*img.getSize().x] = stokeColor;
                         }
                     }
                 }

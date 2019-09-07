@@ -2,9 +2,6 @@
 
 namespace hd {
 
-BaseApp::BaseApp() {}
-BaseApp::~BaseApp() {}
-
 void BaseApp::onInitialize() {}
 void BaseApp::onShutdown() {}
 void BaseApp::onEvent(const WindowEvent &event) {}
@@ -22,7 +19,7 @@ void BaseApp::run() {
     while (!isExit) {
         WindowEvent event;
         while (mWindow.processEvent(event)) {
-            if (event.type == hd::WindowEventType::Close) {
+            if (event.type == WindowEventType::Close) {
                 isExit = true;
             }
             if (mWindow.isFocused()) {
@@ -31,9 +28,9 @@ void BaseApp::run() {
         }
 
         if (mWindow.isFocused()) {
-            if (Clock::getElapsedTime(updateTimer) > UPDATE_TIME) {
+            if (Time::getElapsedTime(updateTimer) > UPDATE_TIME) {
                 onFixedUpdate();
-                updateTimer = Clock::getTime();
+                updateTimer = Time::getCurrentTime();
             }
             onUpdate();
             onDraw();

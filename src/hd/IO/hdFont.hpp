@@ -1,6 +1,6 @@
 #pragma once
-#include "hdStream.hpp"
 #include "hdImage.hpp"
+#include "../Core/hdColor.hpp"
 #include <memory>
 
 namespace hd {
@@ -21,7 +21,7 @@ enum class FontHinting {
 };
 
 class Font {
-    HD_NONCOPYABLE_CLASS(Font)
+    HD_NONCOPYABLE_CLASS(Font);
 public:
     Font();
     Font(const std::string &filename, uint32_t size);

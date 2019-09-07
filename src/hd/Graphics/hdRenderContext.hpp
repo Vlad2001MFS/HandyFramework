@@ -1,13 +1,15 @@
 #pragma once
-#include "../Core/hdCommon.hpp"
+#include "../Core/hdMacros.hpp"
 #include "../Core/hdHandle.hpp"
-#include "../IO/hdStream.hpp"
-#include "../System/hdWindow.hpp"
 #include "../../3rd/include/glm/glm.hpp"
-#include "../../3rd/include/glm/ext.hpp"
 #include <memory>
+#include <vector>
+#include <string>
 
 namespace hd {
+
+class Stream;
+class Window;
 
 enum class BufferUsage {
     Static,
@@ -253,7 +255,7 @@ using HProgram = Handle<struct ProgramImpl*, struct TAG_ProgramImpl>;
 using HProgramConstant = Handle<int, struct TAG_ProgramConstant, -1>;
 
 class RenderContext {
-    HD_NONCOPYABLE_CLASS(RenderContext)
+    HD_NONCOPYABLE_CLASS(RenderContext);
 public:
     RenderContext();
     explicit RenderContext(const Window &window);
@@ -262,7 +264,6 @@ public:
     void create(const Window &window);
     void destroy();
 
-    void clearRenderTarget(float r, float g, float b, float a);
     void clearRenderTarget(const glm::vec4 &rgba);
     void clearDepthStencil(float depth);
     void draw(PrimitiveType primType, uint32_t vertexCount, uint32_t firstVertex);
@@ -275,7 +276,6 @@ public:
     void setBlendState(const BlendModeDesc &blendModeDesc, const ColorMask &colorMask);
     void setBlendState(BlendMode blendMode, const ColorMask &colorMask);
     void setRasterizerState(CullFace cullFace, FillMode fillMode, FrontFace frontFace, const PolygonOffset &polygonOffset);
-    void setViewport(int x, int y, int w, int h);
     void setViewport(const glm::ivec2 &pos, const glm::ivec2 &size);
 
     HVertexFormat createVertexFormat(const std::vector<VertexElement> &desc);
@@ -309,18 +309,16 @@ public:
     void unmapConstantBuffer(HConstantBuffer &handle);
     void bindConstantBuffer(const HConstantBuffer &handle, uint32_t slot);
 
-    HTexture2D createTexture2D(const void *data, uint32_t w, uint32_t h, TextureFormat format);
     HTexture2D createTexture2D(const void *data, const glm::ivec2 &size, TextureFormat format);
-    HTexture2D createTexture2DFromStream(StreamReader &stream);
+    HTexture2D createTexture2DFromStream(Stream &stream);
     HTexture2D createTexture2DFromFile(const std::string &filename);
     void destroyTexture2D(HTexture2D &handle);
     void bindTexture2D(const HTexture2D &handle, uint32_t slot);
     
-    HTexture2DArray createTexture2DArray(const void *data, uint32_t w, uint32_t h, TextureFormat format, uint32_t layers);
     HTexture2DArray createTexture2DArray(const void *data, const glm::ivec2 &size, TextureFormat format, uint32_t layers);
     HTexture2DArray createTexture2DArrayFromFiles(const std::vector<std::string> &filenames);
     void setTexture2DArrayLayerData(const HTexture2DArray &handle, uint32_t layer, const void *data, TextureFormat format);
-    void setTexture2DArrayLayerData(const HTexture2DArray &handle, uint32_t layer, StreamReader &stream);
+    void setTexture2DArrayLayerData(const HTexture2DArray &handle, uint32_t layer, Stream &stream);
     void setTexture2DArrayLayerData(const HTexture2DArray &handle, uint32_t layer, const std::string &filename);
     void destroyTexture2DArray(HTexture2DArray &handle);
     void bindTexture2DArray(const HTexture2DArray &handle, uint32_t slot);
@@ -330,7 +328,7 @@ public:
     void bindSamplerState(const HSamplerState &handle, uint32_t slot);
 
     HProgram createProgram(const std::string &name, const std::string &vsCode, const std::string &psCode, const std::string &defines = "");
-    HProgram createProgramFromStream(StreamReader &stream, const std::string &defines = "");
+    HProgram createProgramFromStream(Stream &stream, const std::string &defines = "");
     HProgram createProgramFromFile(const std::string &filename, const std::string &defines = "");
     void destroyProgram(HProgram &handle);
     HProgramConstant getProgramConstantID(const HProgram &handle, const std::string &name);

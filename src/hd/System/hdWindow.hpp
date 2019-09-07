@@ -1,14 +1,17 @@
 #pragma once
-#include "../Core/hdColor.hpp"
 #include "hdWindowEvent.hpp"
+#include "../Core/hdMacros.hpp"
+#include "../Core/hdColor.hpp"
+#include "../../3rd/include/glm/glm.hpp"
 #include <memory>
 #include <string>
 
 namespace hd {
 
-struct OpenGLContextSettings {
+struct OpenGLContextSettings final {
     OpenGLContextSettings();
-    OpenGLContextSettings(uint32_t majorVersion, uint32_t minorVersion, uint32_t depthBits, uint32_t stencilBits, uint32_t msaaSamples, bool isCoreProfile, bool isDebug);
+    OpenGLContextSettings(uint32_t majorVersion, uint32_t minorVersion, uint32_t depthBits, uint32_t stencilBits,
+        uint32_t msaaSamples, bool isCoreProfile, bool isDebug);
 
     uint32_t majorVersion, minorVersion;
     uint32_t depthBits, stencilBits;
@@ -30,51 +33,47 @@ enum class WindowFlags {
 };
 HD_DECL_ENUM_OPS(WindowFlags)
 
-class Window {
-    HD_NONCOPYABLE_CLASS(Window)
-
+class Window final {
+    HD_NONCOPYABLE_CLASS(Window);
 public:
     Window();
-    Window(const std::string &title, uint32_t w, uint32_t h, WindowFlags flags);
-    Window(const std::string &title, uint32_t w, uint32_t h, WindowFlags flags, const OpenGLContextSettings &contextSettings);
+    Window(const std::string &title, const glm::ivec2 &size, WindowFlags flags);
+    Window(const std::string &title, const glm::ivec2 &size, WindowFlags flags,
+        const OpenGLContextSettings &contextSettings);
     ~Window();
 
-    void create(const std::string &title, uint32_t w, uint32_t h, WindowFlags flags);
-    void create(const std::string &title, uint32_t w, uint32_t h, WindowFlags flags, const OpenGLContextSettings &contextSettings);
+    void create(const std::string &title, const glm::ivec2 &size, WindowFlags flags);
+    void create(const std::string &title, const glm::ivec2 &size, WindowFlags flags,
+        const OpenGLContextSettings &contextSettings);
     void destroy();
-    void activate();
     bool processEvent(WindowEvent &e);
     void swapBuffers();
     void close();
+    void activate();
+    void *lockSurface();
+    void unlockSurface();
 
-    void setHighPriorityProcess();
-    void setVSyncState(bool vsync);
-    bool getVSyncState() const;
-    void setCursorPosition(int x, int y);
-    int getCursorPositionX() const;
-    int getCursorPositionY() const;
+    void setTitle(const std::string &title);
+    void setPosition(const glm::ivec2 &pos);
+    void setSize(const glm::ivec2 &size);
+    void setCursorPosition(const glm::ivec2 &pos);
     void setCursorVisible(bool visible);
+    void setVSyncState(bool vsync);
+
+    std::string getTitle() const;
+    glm::ivec2 getPosition() const;
+    glm::ivec2 getSize() const;
+    glm::ivec2 getCenter() const;
+    WindowFlags getFlags() const;
+    void *getNativeWindowHandle() const;
+    bool isFocused() const;
+    glm::ivec2 getCursorPosition() const;
     bool isCursorVisible() const;
     bool isKeyDown(KeyCode code) const;
-    bool isMouseButtonDown(MouseButton button) const;
-    bool isOpened() const;
-    bool isFocused() const;
-    void setTitle(const std::string &title);
-    std::string getTitle() const;
-    void setPosition(int x, int y);
-    int getPositionX() const;
-    int getPositionY() const;
-    void setSize(uint32_t w, uint32_t h);
-    int getSizeX() const;
-    int getSizeY() const;
-    int getCenterX() const;
-    int getCenterY() const;
-    WindowFlags getFlags() const;
-    bool hasOpenGLContext() const;
+    bool isKeyDown(MouseButton button) const;
+    bool getVSyncState() const;
     const OpenGLContextSettings &getOpenGLContextSettings() const;
-    Color4 *getSurface() const;
-    void *getOSWindowHandle() const;
-    void *getOSContextHandle() const;
+    void *getNativeGLContextHandle() const;
 
 private:
     struct Impl;

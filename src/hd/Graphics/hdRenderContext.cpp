@@ -1,10 +1,11 @@
 #include "hdRenderContext.hpp"
-#include "../Core/hdStringUtils.hpp"
-#include "../Math/hdMathUtils.hpp"
-#include "../IO/hdImage.hpp"
+#include "../System/hdWindow.hpp"
 #include "../IO/hdFileStream.hpp"
+#include "../IO/hdImage.hpp"
+#include "../Math/hdMathUtils.hpp"
+#include "../Core/hdStringUtils.hpp"
+#include "../Core/hdLog.hpp"
 #include "../../3rd/include/GLEW/glew.h"
-#include <vector>
 
 namespace hd {
 
@@ -533,7 +534,7 @@ RenderContext::~RenderContext() {
 }
 
 void RenderContext::create(const Window &window) {
-    if (!window.hasOpenGLContext()) {
+    if (!window.getNativeGLContextHandle()) {
         HD_LOG_ERROR("Failed to create Context for '%s' window", window.getTitle().data());
     }
 
@@ -557,7 +558,7 @@ void RenderContext::create(const Window &window) {
         }
     }
 
-    setViewport(0, 0, window.getSizeX(), window.getSizeY());
+    setViewport(glm::ivec2(0, 0), window.getSize());
 }
 
 void RenderContext::destroy() {
@@ -587,13 +588,9 @@ void RenderContext::destroy() {
     }
 }
 
-void RenderContext::clearRenderTarget(float r, float g, float b, float a) {
-    glClearColor(r, g, b, a);
-    glClear(GL_COLOR_BUFFER_BIT);
-}
-
 void RenderContext::clearRenderTarget(const glm::vec4 &rgba) {
-    clearRenderTarget(rgba.r, rgba.g, rgba.b, rgba.a);
+    glClearColor(rgba.r, rgba.g, rgba.b, rgba.a);
+    glClear(GL_COLOR_BUFFER_BIT);
 }
 
 void RenderContext::clearDepthStencil(float depth) {
@@ -702,10 +699,6 @@ void RenderContext::setRasterizerState(CullFace cullFace, FillMode fillMode, Fro
         glDisable(GL_POLYGON_OFFSET_FILL);
     }
     glPolygonOffset(polygonOffset.factor, polygonOffset.units);
-}
-
-void RenderContext::setViewport(int x, int y, int w, int h) {
-    glViewport(x, y, w, h);
 }
 
 void RenderContext::setViewport(const glm::ivec2 &pos, const glm::ivec2 &size) {
@@ -922,30 +915,26 @@ void RenderContext::bindConstantBuffer(const HConstantBuffer &handle, uint32_t s
     glBindBufferBase(GL_UNIFORM_BUFFER, slot, handle->id);
 }
 
-HTexture2D RenderContext::createTexture2D(const void *data, uint32_t w, uint32_t h, TextureFormat format) {
-    HD_ASSERT(w != 0 && h != 0);
+HTexture2D RenderContext::createTexture2D(const void *data, const glm::ivec2 &size, TextureFormat format) {
+    HD_ASSERT(size.x != 0 && size.y != 0);
     Texture2DImpl *obj = new Texture2DImpl();
     impl->textures2D.push_back(HTexture2D(obj));
     obj->format = format;
-    obj->size = glm::ivec2(w, h);
+    obj->size = size;
     glGenTextures(1, &obj->id);
     glBindTexture(GL_TEXTURE_2D, obj->id);
-    glTexImage2D(GL_TEXTURE_2D, 0, gTextureInternalFormats[static_cast<size_t>(format)], w, h, 0, gTextureExternalFormats[static_cast<size_t>(format)], gTextureDataTypes[static_cast<size_t>(format)], data);
+    glTexImage2D(GL_TEXTURE_2D, 0, gTextureInternalFormats[static_cast<size_t>(format)], size.x, size.y, 0, gTextureExternalFormats[static_cast<size_t>(format)], gTextureDataTypes[static_cast<size_t>(format)], data);
     glGenerateMipmap(GL_TEXTURE_2D);
     return impl->textures2D.back();
 }
 
-HTexture2D RenderContext::createTexture2D(const void *data, const glm::ivec2 &size, TextureFormat format) {
-    return createTexture2D(data, size.x, size.y, format);
-}
-
-HTexture2D RenderContext::createTexture2DFromStream(StreamReader &stream) {
+HTexture2D RenderContext::createTexture2DFromStream(Stream &stream) {
     Image img(stream);
-    return createTexture2D(static_cast<const void*>(img.getPixels()), img.getWidth(), img.getHeight(), TextureFormat::RGBA8);
+    return createTexture2D(img.getData(), img.getSize(), TextureFormat::RGBA8);
 }
 
 HTexture2D RenderContext::createTexture2DFromFile(const std::string &filename) {
-    FileReader fs(filename);
+    FileStream fs(filename, FileMode::Read);
     fs.setName(filename);
     return createTexture2DFromStream(fs);
 }
@@ -966,20 +955,16 @@ void RenderContext::bindTexture2D(const HTexture2D &handle, uint32_t slot) {
     glBindTexture(GL_TEXTURE_2D, handle->id);
 }
 
-HTexture2DArray RenderContext::createTexture2DArray(const void *data, uint32_t w, uint32_t h, TextureFormat format, uint32_t layers) {
-    HD_ASSERT(w != 0 && h != 0);
+HTexture2DArray RenderContext::createTexture2DArray(const void *data, const glm::ivec2 &size, TextureFormat format, uint32_t layers) {
+    HD_ASSERT(size.x != 0 && size.y != 0);
     Texture2DArrayImpl *obj = new Texture2DArrayImpl();
     impl->texture2DArrays.push_back(HTexture2DArray(obj));
     obj->format = format;
-    obj->size = glm::ivec2(w, h);
+    obj->size = size;
     glGenTextures(1, &obj->id);
     glBindTexture(GL_TEXTURE_2D_ARRAY, obj->id);
-    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, gTextureInternalFormats[static_cast<size_t>(format)], w, h, layers, 0, gTextureExternalFormats[static_cast<size_t>(format)], gTextureDataTypes[static_cast<size_t>(format)], data);
+    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, gTextureInternalFormats[static_cast<size_t>(format)], size.x, size.y, layers, 0, gTextureExternalFormats[static_cast<size_t>(format)], gTextureDataTypes[static_cast<size_t>(format)], data);
     return impl->texture2DArrays.back();
-}
-
-HTexture2DArray RenderContext::createTexture2DArray(const void *data, const glm::ivec2 &size, TextureFormat format, uint32_t layers) {
-    return createTexture2DArray(data, size.x, size.y, format, layers);
 }
 
 HTexture2DArray RenderContext::createTexture2DArrayFromFiles(const std::vector<std::string> &filenames) {
@@ -988,13 +973,13 @@ HTexture2DArray RenderContext::createTexture2DArrayFromFiles(const std::vector<s
     images.reserve(filenames.size());
     for (const auto &filename : filenames) {
         images.emplace_back(filename);
-        if (images.size() > 1 && images[0].getWidth() != images[1].getWidth() && images[0].getHeight() != images[1].getHeight()) {
-            HD_LOG_ERROR("Failed to create Texture2DArray from files:\n%s\nThe files has a different image sizes", hd::StringUtils::fromVector(filenames, "'", "'", "\n"));
+        if (images.size() > 1 && images[0].getSize().x != images[1].getSize().x && images[0].getSize().y != images[1].getSize().y) {
+            HD_LOG_ERROR("Failed to create Texture2DArray from files:\n%s\nThe files has a different image sizes", hd::StringUtils::unite(filenames, "'", "'", "\n").data());
         }
     }
-    HTexture2DArray handle = createTexture2DArray(nullptr, images.front().getWidth(), images.front().getHeight(), hd::TextureFormat::RGBA8, static_cast<uint32_t>(filenames.size()));
+    HTexture2DArray handle = createTexture2DArray(nullptr, images.front().getSize(), hd::TextureFormat::RGBA8, static_cast<uint32_t>(filenames.size()));
     for (size_t i = 0; i < images.size(); i++) {
-        setTexture2DArrayLayerData(handle, static_cast<uint32_t>(i), images[i].getPixels(), hd::TextureFormat::RGBA8);
+        setTexture2DArrayLayerData(handle, static_cast<uint32_t>(i), images[i].getData(), hd::TextureFormat::RGBA8);
     }
     return handle;
 }
@@ -1006,13 +991,13 @@ void RenderContext::setTexture2DArrayLayerData(const HTexture2DArray &handle, ui
    glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 }
 
-void RenderContext::setTexture2DArrayLayerData(const HTexture2DArray &handle, uint32_t layer, StreamReader &stream) {
+void RenderContext::setTexture2DArrayLayerData(const HTexture2DArray &handle, uint32_t layer, Stream &stream) {
     Image img(stream);
-    setTexture2DArrayLayerData(handle, layer, img.getPixels(), TextureFormat::RGBA8);
+    setTexture2DArrayLayerData(handle, layer, img.getData(), TextureFormat::RGBA8);
 }
 
 void RenderContext::setTexture2DArrayLayerData(const HTexture2DArray &handle, uint32_t layer, const std::string &filename) {
-    FileReader fs(filename);
+    FileStream fs(filename, FileMode::Read);
     fs.setName(filename);
     setTexture2DArrayLayerData(handle, layer, fs);
 }
@@ -1178,8 +1163,8 @@ HProgram RenderContext::createProgram(const std::string &name, const std::string
     return impl->programs.back();
 }
 
-HProgram RenderContext::createProgramFromStream(StreamReader &stream, const std::string &defines) {
-    std::vector<std::string> text = stream.readAllLines();
+HProgram RenderContext::createProgramFromStream(Stream &stream, const std::string &defines) {
+    std::vector<std::string> text = hd::StringUtils::split(stream.readAllText(), "\n", false);
     std::string code[2];
     int shaderType = 0; // 0 - vs, 1 - ps;
     for (const auto &it : text) {
@@ -1197,7 +1182,7 @@ HProgram RenderContext::createProgramFromStream(StreamReader &stream, const std:
 }
 
 HProgram RenderContext::createProgramFromFile(const std::string &filename, const std::string &defines) {
-    FileReader fs(filename);
+    FileStream fs(filename, FileMode::Read);
     fs.setName(filename);
     return createProgramFromStream(fs, defines);
 }

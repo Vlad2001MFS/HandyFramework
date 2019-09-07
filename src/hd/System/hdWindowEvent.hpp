@@ -37,11 +37,11 @@ enum class KeyState {
     Released
 };
 
-struct ResizeWindowEvent {
+struct ResizeWindowEvent final {
     int width, height;
 };
 
-struct KeyboardWindowEvent {
+struct KeyboardWindowEvent final {
     KeyCode code;
     KeyState state;
     bool alt;
@@ -50,7 +50,7 @@ struct KeyboardWindowEvent {
     bool system;
 };
 
-struct MouseWheelWindowEvent {
+struct MouseWheelWindowEvent final {
     int x; // if greater then zero - scroll right, else if less then zero - scroll left
     int y; // if greater then zero - scroll up, else if less then zero - scroll down
     bool leftButton;
@@ -62,18 +62,18 @@ struct MouseWheelWindowEvent {
     bool shift;
 };
 
-struct MouseButtonWindowEvent {
+struct MouseButtonWindowEvent final {
     MouseButton btn;
     KeyState state;
     int x, y;
 };
 
-struct MouseMoveWindowEvent {
+struct MouseMoveWindowEvent final {
     int x, y;
     int deltaX, deltaY;
 };
 
-struct WindowEvent {
+struct WindowEvent final {
     WindowEventType type;
     union {
         ResizeWindowEvent resize;

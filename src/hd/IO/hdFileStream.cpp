@@ -1,139 +1,95 @@
 #include "hdFileStream.hpp"
-#include <stdio.h>
+#include "../Core/hdLog.hpp"
+#include <cstdio>
 
 namespace hd {
     
-static const int gOrigins[] = {
-    SEEK_SET,
-    SEEK_CUR,
-    SEEK_END
-};
-
-FileReader::FileReader() {
-    mHandle = nullptr;
+FileStream::FileStream() {
+    mFile = nullptr;
+    mMode = FileMode::Read;
 }
 
-FileReader::FileReader(const std::string &filename) : FileReader() {
-	open(filename);
+FileStream::FileStream(const std::string &path, FileMode mode) : FileStream() {
+    create(path, mode);
 }
 
-FileReader::~FileReader() {
-	close();
+FileStream::~FileStream() {
+    destroy();
 }
 
-bool FileReader::isEOF() const {
-	return mHandle && feof(mHandle);
-}
-
-bool FileReader::setPosition(int offset, StreamOrigin origin) {
-	HD_ASSERT(mHandle);
-    return fseek(mHandle, offset, gOrigins[static_cast<size_t>(origin)]) == 0;
-}
-
-uint32_t FileReader::getPosition() const {
-	HD_ASSERT(mHandle);
-    uint32_t pos = ftell(mHandle);
-    if (pos < 0) {
-        HD_LOG_ERROR("Failed to get position of stream '%s'", getName().data());
+size_t FileStream::read(void *data, size_t size) {
+    HD_ASSERT(mFile);
+    if (!isReadable()) {
+        HD_LOG_ERROR("Failed to read %dz bytes from file '%s'", size, getName().data());
     }
-    return pos;
+    return fread(data, 1, size, mFile);
 }
 
-size_t FileReader::read(void *data, size_t size) {
-    HD_ASSERT(!isEOF());
-	return fread(data, 1, size, mHandle);
-}
-
-uint32_t FileReader::getSize() const {
-    uint32_t curPos = getPosition();
-    fseek(mHandle, 0, SEEK_END);
-    uint32_t size = getPosition();
-    fseek(mHandle, static_cast<int>(curPos), SEEK_SET);
-    return size;
-}
-
-void FileReader::open(const std::string &filename) {
-    HD_ASSERT(!filename.empty());
-	close();
-    mHandle = fopen(filename.data(), "rb");
-    if (!mHandle) {
-        HD_LOG_ERROR("Failed to open file stream reader '%s'", filename.data());
+size_t FileStream::write(const void *data, size_t size) {
+    HD_ASSERT(mFile);
+    if (!isWritable()) {
+        HD_LOG_ERROR("Failed to write %dz bytes to file '%s'", size, getName().data());
     }
-    setName(filename);
+    return fwrite(data, 1, size, mFile);
 }
 
-void FileReader::close() {
-	if (mHandle) {
-        fclose(mHandle);
-        mHandle = nullptr;
+size_t FileStream::tell() const {
+    HD_ASSERT(mFile);
+    return static_cast<size_t>(ftell(mFile));
+}
+
+size_t FileStream::getSize() const {
+    long curPos = ftell(mFile);
+    fseek(mFile, 0, SEEK_END);
+    long size = ftell(mFile);
+    fseek(mFile, curPos, SEEK_SET);
+    return static_cast<size_t>(size);
+}
+
+bool FileStream::seek(size_t pos) {
+    HD_ASSERT(mFile);
+    return fseek(mFile, static_cast<long>(pos), SEEK_SET) == 0;
+}
+
+bool FileStream::isEOF() const {
+    return feof(mFile) != 0;
+}
+
+bool FileStream::isReadable() const {
+    return mFile && mMode != FileMode::Write;
+}
+
+bool FileStream::isWritable() const {
+    return mFile && mMode != FileMode::Read;
+}
+
+void FileStream::create(const std::string &path, FileMode mode) {
+    destroy();
+    std::string modeStr;
+    if (mode == FileMode::Read) {
+        modeStr = "rb";
     }
-}
-
-
-
-FileWriter::FileWriter() {
-    mHandle = nullptr;
-}
-
-FileWriter::FileWriter(const std::string &filename) : FileWriter() {
-	open(filename);
-}
-
-FileWriter::~FileWriter() {
-	close();
-}
-
-bool FileWriter::isEOF() const {
-	return mHandle && feof(mHandle);
-}
-
-bool FileWriter::setPosition(int offset, StreamOrigin origin) {
-	HD_ASSERT(mHandle);
-    return fseek(mHandle, offset, gOrigins[static_cast<size_t>(origin)]) == 0;
-}
-
-uint32_t FileWriter::getPosition() const {
-    HD_ASSERT(mHandle);
-    uint32_t pos = ftell(mHandle);
-    if (pos < 0) {
-        HD_LOG_ERROR("Failed to get position of stream '%s'", getName().data());
+    else if (mode == FileMode::Write) {
+        modeStr = "wb";
     }
-    return pos;
-}
-
-size_t FileWriter::write(const void *data, size_t size) {
-	HD_ASSERT(mHandle);
-	return fwrite(data, 1, size, mHandle);
-}
-
-uint32_t FileWriter::getSize() const {
-    uint32_t curPos = getPosition();
-    fseek(mHandle, 0, SEEK_END);
-    uint32_t size = getPosition();
-    fseek(mHandle, static_cast<int>(curPos), SEEK_SET);
-    return size;
-}
-
-void FileWriter::open(const std::string &filename) {
-    HD_ASSERT(!filename.empty());
-	close();
-    mHandle = fopen(filename.data(), "wb");
-    if (!mHandle) {
-        HD_LOG_ERROR("Failed to open file stream writer '%s'", filename.data());
+    else if (mode == FileMode::ReadWrite) {
+        modeStr = "rb+";
     }
-    setName(filename);
-}
-
-void FileWriter::close() {
-	if (mHandle) {
-        fclose(mHandle);
-        mHandle = nullptr;
+    mFile = fopen(path.data(), modeStr.data());
+    if (!mFile) {
+        HD_LOG_ERROR("Failed to open file '%s' with flags '%s'", path.data(), modeStr.data());
     }
+    mMode = mode;
+    setName(path);
 }
 
-void FileWriter::flush() {
-	HD_ASSERT(mHandle);
-    fflush(mHandle);
+void FileStream::destroy() {
+    if (mFile) {
+        fclose(mFile);
+        mFile = nullptr;
+        mMode = FileMode::Read;
+        setName("");
+    }
 }
 
 }

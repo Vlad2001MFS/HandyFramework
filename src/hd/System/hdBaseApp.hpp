@@ -1,12 +1,9 @@
 #pragma once
-#include "../Core/hdFPSCounter.hpp"
 #include "hdWindow.hpp"
+#include "../Core/hdFPSCounter.hpp"
 
 #define HD_APP_MAIN(appClass) int main(int argc, char **argv) { \
-    HD_UNUSED(argc); \
-    HD_UNUSED(argv); \
-    appClass hd_main_app;\
-    hd_main_app.run();\
+    appClass().run();\
     return 0;\
 }
 
@@ -14,8 +11,8 @@ namespace hd {
 
 class BaseApp {
 public:
-    BaseApp();
-    virtual ~BaseApp();
+    BaseApp() = default;
+    virtual ~BaseApp() = default;
 
     virtual void onInitialize();
     virtual void onShutdown();

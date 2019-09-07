@@ -39,6 +39,3 @@
 #       pragma error("Failed to detect host platform architecture")
 #   endif
 #endif
-
-//#define HD_GAPI_D3D11
-#define HD_GAPI_OPENGL

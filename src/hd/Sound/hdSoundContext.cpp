@@ -1,5 +1,6 @@
 #include "hdSoundContext.hpp"
 #include "../IO/hdFileStream.hpp"
+#include "../Core/hdLog.hpp"
 #include "../../3rd/include/SDL2/SDL_mixer.h"
 #include <memory>
 #include <algorithm>
@@ -17,10 +18,6 @@ struct MusicImpl {
     std::unique_ptr<uint8_t[]> buf;
     Mix_Music *music;
 };
-
-SoundContext::SoundContext() {
-
-}
 
 SoundContext::SoundContext(uint32_t freq, uint32_t chunkSize, bool stereo) {
     create(freq, chunkSize, stereo);
@@ -51,7 +48,8 @@ void SoundContext::destroy() {
     Mix_Quit();
 }
 
-HSound SoundContext::createSoundFromStream(StreamReader &stream) {
+HSound SoundContext::createSoundFromStream(Stream &stream) {
+    HD_ASSERT(stream.isReadable());
     SoundImpl *impl = new SoundImpl();
     impl->name = stream.getName();
     mSounds.push_back(HSound(impl));
@@ -72,7 +70,7 @@ HSound SoundContext::createSoundFromStream(StreamReader &stream) {
 }
 
 HSound SoundContext::createSoundFromFile(const std::string &filename) {
-    FileReader fs(filename);
+    FileStream fs(filename, FileMode::Read);
     return createSoundFromStream(fs);
 }
 
@@ -119,7 +117,8 @@ bool SoundContext::isPausedSound(const HSoundChannel &channel) const {
     return Mix_Paused(channel.value);
 }
 
-HMusic SoundContext::createMusicFromStream(StreamReader &stream) {
+HMusic SoundContext::createMusicFromStream(Stream &stream) {
+    HD_ASSERT(stream.isReadable());
     MusicImpl *impl = new MusicImpl();
     impl->name = stream.getName();
     mMusics.push_back(HMusic(impl));
@@ -140,7 +139,7 @@ HMusic SoundContext::createMusicFromStream(StreamReader &stream) {
 }
 
 HMusic SoundContext::createMusicFromFile(const std::string &filename) {
-    FileReader fs(filename);
+    FileStream fs(filename, FileMode::Read);
     return createMusicFromStream(fs);
 }
 

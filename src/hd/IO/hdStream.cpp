@@ -1,19 +1,14 @@
 #include "hdStream.hpp"
-#include "../Core/hdStringUtils.hpp"
+#include "../Core/hdLog.hpp"
 
 namespace hd {
 
-Stream::Stream() {}
-Stream::~Stream() {}
-
-StreamReader::~StreamReader() {}
-
-std::string StreamReader::readLine(char separator) {
+std::string Stream::readLine(char separator) {
     std::string line;
     while (!isEOF()) {
         char ch;
         read(&ch, sizeof(ch));
-        if (ch == separator) {
+        if (ch == separator || ch == '\0') {
             break;
         }
         else {
@@ -23,12 +18,8 @@ std::string StreamReader::readLine(char separator) {
     return line;
 }
 
-std::vector<std::string> StreamReader::readAllLines() {
-    return StringUtils::split(readAllText(), "\n", false);
-}
-
-std::string StreamReader::readAllText() {
-    uint32_t size = getSize();
+std::string Stream::readAllText() {
+    size_t size = getSize();
     std::string data(size, '\0');
     if (read(data.data(), size) != size) {
         HD_LOG_ERROR("Failed to read all text from stream '%s'", getName().data());
@@ -36,10 +27,16 @@ std::string StreamReader::readAllText() {
     return data;
 }
 
-StreamWriter::~StreamWriter() {}
+size_t Stream::writeLine(const std::string &line) {
+    return write(line.data(), line.size() + 1);
+}
 
-size_t StreamWriter::writeString(const std::string &data) {
-    return write(data.data(), sizeof(char)*data.size());
+void Stream::setName(const std::string &name) {
+    mName = name;
+}
+
+const std::string &Stream::getName() const {
+    return mName;
 }
 
 }
