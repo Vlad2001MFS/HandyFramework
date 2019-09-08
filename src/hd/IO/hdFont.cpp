@@ -1,7 +1,7 @@
 #include "hdFont.hpp"
 #include "hdFileStream.hpp"
 #include "../Core/hdLog.hpp"
-#include "../../3rd/include/SDL2/SDL_ttf.h"
+#include "SDL2/SDL_ttf.h"
 
 namespace hd {
 

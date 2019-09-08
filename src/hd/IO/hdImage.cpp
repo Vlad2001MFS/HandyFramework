@@ -3,7 +3,7 @@
 #include "../Core/hdLog.hpp"
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_FAILURE_USERMSG
-#include "../../3rd/include/stb/stb_image.h"
+#include "stb/stb_image.h"
 
 namespace hd {
 

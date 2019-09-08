@@ -1,5 +1,5 @@
 #include "hdFirstPersonCamera.hpp"
-#include "../../3rd/include/glm/ext.hpp"
+#include "glm/ext.hpp"
 
 namespace hd {
 

@@ -1,7 +1,7 @@
 #include "hdWindow.hpp"
 #include "../Core/hdLog.hpp"
-#include "../../3rd/include/SDL2/SDL.h"
-#include "../../3rd/include/SDL2/SDL_syswm.h"
+#include "SDL2/SDL.h"
+#include "SDL2/SDL_syswm.h"
 
 namespace hd {
 

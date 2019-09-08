@@ -1,6 +1,6 @@
 #pragma once
 #include "../Core/hdMacros.hpp"
-#include "../../3rd/include/glm/glm.hpp"
+#include "glm/glm.hpp"
 
 namespace hd {
 

@@ -1,6 +1,6 @@
 #pragma once
 #include "hdStream.hpp"
-#include "../../3rd/include/glm/glm.hpp"
+#include "glm/glm.hpp"
 #include <vector>
 
 namespace hd {

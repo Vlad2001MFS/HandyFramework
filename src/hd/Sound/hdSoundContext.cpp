@@ -1,7 +1,7 @@
 #include "hdSoundContext.hpp"
 #include "../IO/hdFileStream.hpp"
 #include "../Core/hdLog.hpp"
-#include "../../3rd/include/SDL2/SDL_mixer.h"
+#include "SDL2/SDL_mixer.h"
 #include <memory>
 #include <algorithm>
 

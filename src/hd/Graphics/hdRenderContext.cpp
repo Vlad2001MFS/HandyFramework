@@ -5,7 +5,7 @@
 #include "../Math/hdMathUtils.hpp"
 #include "../Core/hdStringUtils.hpp"
 #include "../Core/hdLog.hpp"
-#include "../../3rd/include/GLEW/glew.h"
+#include "GLEW/glew.h"
 
 namespace hd {
 

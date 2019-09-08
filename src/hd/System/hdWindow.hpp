@@ -2,7 +2,7 @@
 #include "hdWindowEvent.hpp"
 #include "../Core/hdMacros.hpp"
 #include "../Core/hdColor.hpp"
-#include "../../3rd/include/glm/glm.hpp"
+#include "glm/glm.hpp"
 #include <memory>
 #include <string>
 

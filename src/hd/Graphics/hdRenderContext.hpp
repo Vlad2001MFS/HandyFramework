@@ -1,7 +1,7 @@
 #pragma once
 #include "../Core/hdMacros.hpp"
 #include "../Core/hdHandle.hpp"
-#include "../../3rd/include/glm/glm.hpp"
+#include "glm/glm.hpp"
 #include <memory>
 #include <vector>
 #include <string>
