@@ -26,6 +26,8 @@ class Log : public Singleton<Log> {
 public:
     Log();
 
+    void appAtEntryPoint(int argc, char **argv);
+
     template<typename... Args>
     void write(LogLevel level, const char *file, const char *func, uint32_t line, const char *fmt, const Args &...args) {
         writeArgs(level, file, func, line, fmt, fmt::make_format_args(args...));
