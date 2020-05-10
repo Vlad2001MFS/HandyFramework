@@ -1,6 +1,6 @@
 #include "FirstPersonCamera.hpp"
-#include "glm/ext.hpp"
-#include "glm/gtx/euler_angles.hpp"
+#include <glm/ext.hpp>
+#include <glm/gtx/euler_angles.hpp>
 
 namespace hd {
 
