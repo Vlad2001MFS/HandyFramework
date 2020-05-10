@@ -1,4 +1,2 @@
-obj/
-bin/
-*.zip
-HandyFramework.vcxproj.user
+_build
+.vscode
