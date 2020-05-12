@@ -26,7 +26,6 @@ StringHash::StringHash(const std::string &str) {
     mValue = std::hash<std::string>()(str);
     if (!getStringHashDB().count(mValue)) {
         getStringHashDB().insert(std::make_pair(mValue, str));
-        HD_LOG_INFO("Registered string '{}' with hash '{}'", str, mValue);
     }
 }
 
