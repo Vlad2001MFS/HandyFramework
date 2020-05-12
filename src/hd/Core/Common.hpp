@@ -69,21 +69,25 @@
    inline enumType &operator ^= (enumType &a, enumType b) \
        { return (enumType &)(((hd::details::_EnumFlagSizedInt<enumType>::type &)a) ^= ((hd::details::_EnumFlagSizedInt<enumType>::type)b)); }
 
-#define HD_RUN_BEFORE_MAIN(...) __HD_AUTO_RUN_BEFORE_MAIN(__VA_ARGS__ ## __LINE__)
-
-#define __HD_RUN_BEFORE_MAIN(...) \
-	namespace { \
-	static struct HD_CONCAT(hd_autorun_before_main_struct, __LINE__) { HD_CONCAT(hd_autorun_before_main_struct, __LINE__)() {__VA_ARGS__ ;} } HD_CONCAT(hd_autorun_before_main_struct_instance, __LINE__); \
-	}
-
-#define __HD_AUTO_RUN_BEFORE_MAIN(ln) \
-	static void HD_CONCAT(hd_autorun_before_main_function, ln)(); \
-	__HD_RUN_BEFORE_MAIN(HD_CONCAT(hd_autorun_before_main_function, ln)()); \
-	static void HD_CONCAT(hd_autorun_before_main_function, ln)()
-
 #define HD_CONCAT(a, b) _HD_CONCAT(a, b)
 #define _HD_CONCAT(a, b) __HD_CONCAT(a ## b)
 #define __HD_CONCAT(ab) ab
+
+#ifdef HD_COMPILER_VC
+#   define HD_RUN_BEFORE_MAIN(...) __HD_AUTO_RUN_BEFORE_MAIN(__VA_ARGS__ ## __LINE__)
+
+#   define __HD_RUN_BEFORE_MAIN(...) \
+        namespace { \
+        static struct HD_CONCAT(hd_autorun_before_main_struct, __LINE__) { HD_CONCAT(hd_autorun_before_main_struct, __LINE__)() {__VA_ARGS__ ;} } HD_CONCAT(hd_autorun_before_main_struct_instance, __LINE__); \
+        }
+
+#   define __HD_AUTO_RUN_BEFORE_MAIN(ln) \
+        static void HD_CONCAT(hd_autorun_before_main_function, ln)(); \
+        __HD_RUN_BEFORE_MAIN(HD_CONCAT(hd_autorun_before_main_function, ln)()); \
+        static void HD_CONCAT(hd_autorun_before_main_function, ln)()
+#else
+#   define HD_RUN_BEFORE_MAIN(...) static void __attribute__((constructor)) HD_CONCAT(__hd__run_before_main__, __COUNTER__)(__VA_ARGS__)
+#endif
 
 namespace hd {
 
