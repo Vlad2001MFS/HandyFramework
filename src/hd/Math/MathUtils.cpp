@@ -28,6 +28,17 @@ glm::mat4 MathUtils::ortho2D(float left, float right, float bottom, float top) {
     );
 }
 
+glm::vec2 MathUtils::rotate2D(float vx, float vy, float angle) {
+    return glm::vec2(
+        vx*cosf(angle) - vy*sinf(angle),
+        vy*cosf(angle) + vx*sinf(angle)
+    );
+}
+
+glm::vec2 MathUtils::rotate2D(const glm::vec2 &v, float angle) {
+    return rotate2D(v.x, v.y, angle);
+}
+
 AABB::AABB() : pos(0, 0, 0), size(0, 0, 0) {
 }
 

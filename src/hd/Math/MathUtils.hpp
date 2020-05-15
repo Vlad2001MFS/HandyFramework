@@ -8,6 +8,8 @@ class MathUtils : public StaticClass {
 public:
     static int randomInt32(int min, int max);
     static glm::mat4 ortho2D(float left, float right, float bottom, float top);
+    static glm::vec2 rotate2D(float vx, float vy, float angle);
+    static glm::vec2 rotate2D(const glm::vec2 &v, float angle);
 };
 
 struct AABB {
