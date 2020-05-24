@@ -12,6 +12,7 @@ Log::Log() {
 void Log::appAtEntryPoint(int argc, char **argv) {
     HD_LOG_INFO("APP ENTRY POINT");
     loguru::init(argc, argv);
+    loguru::add_file("App.log", loguru::FileMode::Append, loguru::Verbosity_MAX);
 }
 
 void Log::writeArgs(LogLevel level, const char *file, const char *func, uint32_t line, const char *fmt, fmt::format_args args) {
